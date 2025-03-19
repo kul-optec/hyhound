@@ -1,0 +1,24 @@
+[settings]
+build_type=Release
+compiler=gcc
+compiler.cppstd=gnu23
+compiler.libcxx=libstdc++11
+compiler.version=14
+os=Linux
+
+[tool_requires]
+tttapa-toolchains/1.0.1
+mold/2.32.1
+
+[buildenv]
+MKLROOT={{ os.getenv("MKLROOT") or os.path.join(os.getenv("HOME"), "intel/oneapi/mkl/latest")}}
+VTUNE_PROFILER_DIR={{ os.getenv("VTUNE_PROFILER_DIR") or os.path.join(os.getenv("HOME"), "intel/oneapi/vtune/latest")}}
+LD_LIBRARY_PATH=!
+LD_PRELOAD=!
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja Multi-Config
+tools.build:exelinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
+tools.build:sharedlinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
+tools.build:exelinkflags+=["-fuse-ld=mold"]
+tools.build:sharedlinkflags+=["-fuse-ld=mold"]

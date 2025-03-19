@@ -1,0 +1,31 @@
+name: 'CI: Linux'
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        profile: ["laptop"]
+      fail-fast: false
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Conan and sccache
+      uses: ./.github/workflows/setup-conan
+      with:
+        cache-key: ${{ matrix.profile }}
+
+    - name: Build
+      run: >
+        conan create . --build=missing -pr profiles/${{ matrix.profile }} \
+          -s build_type=Release \
+          -c tools.build:skip_test=True \
+          -o \&:with_openmp=True -o \&:with_openblas=True -o \&:with_mkl=False \
+          -o \&:with_benchmarks=True
+
+    - run: conan cache clean

@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(guanaqo)
+if (@HYHOUND_WITH_OPENMP@)
+    find_dependency(OpenMP COMPONENTS CXX)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/hyhoundCoreTargets.cmake")
+
+check_required_components(hyhoundCore)

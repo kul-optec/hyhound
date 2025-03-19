@@ -1,0 +1,22 @@
+#pragma once
+
+// NOLINTBEGIN(*-macro-to-enum)
+#define HYHOUND_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define HYHOUND_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define HYHOUND_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define HYHOUND_VERSION_SUFFIX "@PY_VERSION_SUFFIX@"
+#define HYHOUND_VERSION "@PROJECT_VERSION@"
+#define HYHOUND_VERSION_FULL "@PROJECT_VERSION@@PY_VERSION_SUFFIX@"
+#define HYHOUND_BUILD_TIME hyhound_build_time
+#define HYHOUND_COMMIT_HASH hyhound_commit_hash
+// NOLINTEND(*-macro-to-enum)
+
+#include <hyhound/export.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern HYHOUND_EXPORT const char *const hyhound_build_time;
+extern HYHOUND_EXPORT const char *const hyhound_commit_hash;
+#ifdef __cplusplus
+}
+#endif

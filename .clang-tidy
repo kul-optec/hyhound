@@ -1,0 +1,39 @@
+---
+WarningsAsErrors: ''
+HeaderFilterRegex: '(src/)|(benchmarks/)|(test/)'
+FormatStyle: file
+
+Checks: |
+    -*,
+    clang-analyzer-*,
+    clang-diagnostic-*,
+    bugprone-*,
+    modernize-*,
+    performance-*,
+    portability-*,
+    readability-*,
+    -modernize-avoid-c-arrays,
+    -modernize-raw-string-literal,
+    -modernize-use-bool-literals,
+    -modernize-use-trailing-return-type,
+    -readability-avoid-nested-conditional-operator,
+    -readability-braces-around-statements,
+    -readability-convert-member-functions-to-static,
+    -readability-else-after-return,
+    -readability-identifier-length,
+    -readability-isolate-declaration,
+    -readability-magic-numbers,
+    -readability-math-missing-parentheses,
+    -readability-named-parameter,
+    -readability-redundant-access-specifiers,
+    -readability-redundant-member-init,
+    -readability-static-accessed-through-instance,
+    -readability-uppercase-literal-suffix,
+    -bugprone-easily-swappable-parameters,
+    -performance-avoid-endl,
+
+CheckOptions:
+    - key: readability-implicit-bool-conversion.AllowIntegerConditions
+      value: true
+    - key: readability-implicit-bool-conversion.AllowPointerConditions
+      value: true

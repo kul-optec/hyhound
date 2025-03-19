@@ -1,0 +1,4 @@
+#include <hyhound-version.h>
+
+const char *const hyhound_build_time = "@HYHOUND_BUILD_TIME@";
+const char *const hyhound_commit_hash = "@HYHOUND_COMMIT_HASH@";
