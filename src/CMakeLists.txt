@@ -32,9 +32,7 @@ target_sources(util INTERFACE FILE_SET headers TYPE HEADERS
           "util/include/hyhound/lut.hpp"
           "util/include/hyhound/matrix-view.hpp"
           "util/include/hyhound/openmp.h"
-          "util/include/hyhound/stringify.h"
           "util/include/hyhound/unroll.h"
-          "util/include/hyhound/preprocessor.h"
 )
 target_link_libraries(util INTERFACE hyhound::config guanaqo::guanaqo)
 hyhound_configure_interface_library(util)

@@ -1,10 +1,13 @@
 #include <hyhound/householder-updowndate.hpp>
 #include <hyhound/linalg/blas-interface.hpp>
-#include <hyhound/preprocessor.h>
+#include <hyhound-version.h>
+
+#include <guanaqo/eigen/view.hpp>
+#include <guanaqo/preprocessor.h>
+
 #include <Eigen/Dense>
 #include <benchmark/benchmark.h>
-#include <guanaqo/eigen/view.hpp>
-#include <hyhound-version.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <format>
@@ -180,8 +183,9 @@ std::vector<::benchmark::internal::Benchmark *> benchmarks;
         return bm;                                                             \
     }()
 #define BM_BLK_IMPL_NAME(name, ...)                                            \
-    HYH_CONCATENATE_TOKENS(name, HYH_JOIN_TOKENS(__VA_ARGS__))
-#define BM_BLK_NAME(name, ...) #name "<" HYH_JOIN_STRINGS(", ", __VA_ARGS__) ">"
+    GUANAQO_CONCATENATE_TOKENS(name, GUANAQO_JOIN_TOKENS(__VA_ARGS__))
+#define BM_BLK_NAME(name, ...)                                                 \
+    #name "<" GUANAQO_JOIN_STRINGS(", ", __VA_ARGS__) ">"
 #define BENCHMARK_BLOCKED(name, func, updown, ...)                             \
     BENCHMARK_TEMPLATE_DEFINE_F(                                               \
         BlockedFixture, BM_BLK_IMPL_NAME(name, __VA_ARGS__), __VA_ARGS__)      \
