@@ -22,7 +22,7 @@ struct lapack_error : std::runtime_error {
     lapack_error(const std::string &name, index_t info)
         : std::runtime_error("LAPACK error: " + name +
                              " (info=" + std::to_string(info) + ")"),
-          info {info} {}
+          info{info} {}
     index_t info;
 };
 

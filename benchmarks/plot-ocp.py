@@ -14,7 +14,7 @@ with open(filename) as f:
     data = json.load(f)
 
 stat = "median"
-metric = "real_time" # or "cpu_time"
+metric = "real_time"  # or "cpu_time"
 
 # Create a DataFrame from the benchmarks
 df = pd.DataFrame(data["benchmarks"])
@@ -24,7 +24,7 @@ df = df_runs.aggregate([stat, "min", "max"])
 
 # Extract the ny parameter for the x-axis
 df["run_name"] = df.index
-df['ny'] = df['run_name'].str.extract(r'/ny:(\d+)(?:/|$)').astype(int)
+df["ny"] = df["run_name"].str.extract(r"/ny:(\d+)(?:/|$)").astype(int)
 # Extract the name
 df["func_name"] = df["run_name"].apply(lambda x: x.split("/", 1)[0])
 df = df.sort_values(by=["func_name", "ny"])
@@ -71,7 +71,7 @@ plot_opts = {
         color="tab:blue",
         marker=".",
         markersize=7,
-        mfc="white"
+        mfc="white",
     ),
     "bm_solve_riccati": dict(
         label="Solve (Riccati)",
@@ -85,7 +85,7 @@ plot_opts = {
         color="tab:green",
         marker=".",
         markersize=7,
-        mfc="white"
+        mfc="white",
     ),
 }
 
@@ -95,11 +95,7 @@ for function, opts in plot_opts.items():
     if function_df.empty:
         continue
     print(function)
-    ax.plot(
-        function_df["ny"],
-        1e-3 * function_df[metric][stat].array,
-        **opts
-    )
+    ax.plot(function_df["ny"], 1e-3 * function_df[metric][stat].array, **opts)
     ax.fill_between(
         function_df["ny"],
         1e-3 * function_df[metric]["min"].array,

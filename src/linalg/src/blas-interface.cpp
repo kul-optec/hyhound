@@ -7,29 +7,29 @@ namespace hyhound::linalg {
 
 template <>
 HYHOUND_LINALG_EXPORT void xgemv(CBLAS_LAYOUT Layout, CBLAS_TRANSPOSE TransA,
-                                  blas_index_t M, blas_index_t N, double alpha,
-                                  const double *A, blas_index_t lda,
-                                  const double *X, blas_index_t incX,
-                                  double beta, double *Y, blas_index_t incY) {
+                                 blas_index_t M, blas_index_t N, double alpha,
+                                 const double *A, blas_index_t lda,
+                                 const double *X, blas_index_t incX,
+                                 double beta, double *Y, blas_index_t incY) {
     return cblas_dgemv(Layout, TransA, M, N, alpha, A, lda, X, incX, beta, Y,
                        incY);
 }
 template <>
 HYHOUND_LINALG_EXPORT void xgemv(CBLAS_LAYOUT Layout, CBLAS_TRANSPOSE TransA,
-                                  blas_index_t M, blas_index_t N, float alpha,
-                                  const float *A, blas_index_t lda,
-                                  const float *X, blas_index_t incX, float beta,
-                                  float *Y, blas_index_t incY) {
+                                 blas_index_t M, blas_index_t N, float alpha,
+                                 const float *A, blas_index_t lda,
+                                 const float *X, blas_index_t incX, float beta,
+                                 float *Y, blas_index_t incY) {
     return cblas_sgemv(Layout, TransA, M, N, alpha, A, lda, X, incX, beta, Y,
                        incY);
 }
 
 template <>
 HYHOUND_LINALG_EXPORT void xgemm(CBLAS_LAYOUT Layout, CBLAS_TRANSPOSE TransA,
-                                  CBLAS_TRANSPOSE TransB, index_t M, index_t N,
-                                  index_t K, double alpha, const double *A,
-                                  index_t lda, const double *B, index_t ldb,
-                                  double beta, double *C, index_t ldc) {
+                                 CBLAS_TRANSPOSE TransB, index_t M, index_t N,
+                                 index_t K, double alpha, const double *A,
+                                 index_t lda, const double *B, index_t ldb,
+                                 double beta, double *C, index_t ldc) {
     cblas_dgemm(Layout, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C,
                 ldc);
 }
@@ -106,16 +106,16 @@ xtrmm(CBLAS_LAYOUT Layout, CBLAS_SIDE Side, CBLAS_UPLO Uplo,
 
 template <>
 HYHOUND_LINALG_EXPORT void xsyrk(CBLAS_LAYOUT Layout, CBLAS_UPLO Uplo,
-                                  CBLAS_TRANSPOSE Trans, index_t N, index_t K,
-                                  double alpha, const double *A, index_t lda,
-                                  double beta, double *C, index_t ldc) {
+                                 CBLAS_TRANSPOSE Trans, index_t N, index_t K,
+                                 double alpha, const double *A, index_t lda,
+                                 double beta, double *C, index_t ldc) {
     cblas_dsyrk(Layout, Uplo, Trans, N, K, alpha, A, lda, beta, C, ldc);
 }
 template <>
 HYHOUND_LINALG_EXPORT void xsyrk(CBLAS_LAYOUT Layout, CBLAS_UPLO Uplo,
-                                  CBLAS_TRANSPOSE Trans, index_t N, index_t K,
-                                  float alpha, const float *A, index_t lda,
-                                  float beta, float *C, index_t ldc) {
+                                 CBLAS_TRANSPOSE Trans, index_t N, index_t K,
+                                 float alpha, const float *A, index_t lda,
+                                 float beta, float *C, index_t ldc) {
     cblas_ssyrk(Layout, Uplo, Trans, N, K, alpha, A, lda, beta, C, ldc);
 }
 
@@ -174,36 +174,34 @@ void xscal(index_t N, float alpha, float *X, index_t incX) {
 
 template <>
 void HYHOUND_LINALG_EXPORT xpotrf(const char *uplo, index_t n, double *a,
-                                   index_t lda, index_t *info) {
+                                  index_t lda, index_t *info) {
     dpotrf(uplo, &n, a, &lda, info);
 }
 template <>
 void HYHOUND_LINALG_EXPORT xpotrf(const char *uplo, index_t n, float *a,
-                                   index_t lda, index_t *info) {
+                                  index_t lda, index_t *info) {
     spotrf(uplo, &n, a, &lda, info);
 }
 
 template <>
 void HYHOUND_LINALG_EXPORT xlauum(const char *uplo, index_t n, double *a,
-                                   index_t lda, index_t *info) {
+                                  index_t lda, index_t *info) {
     dlauum(uplo, &n, a, &lda, info);
 }
 template <>
 void HYHOUND_LINALG_EXPORT xlauum(const char *uplo, index_t n, float *a,
-                                   index_t lda, index_t *info) {
+                                  index_t lda, index_t *info) {
     slauum(uplo, &n, a, &lda, info);
 }
 
 template <>
-void HYHOUND_LINALG_EXPORT xtrtri(const char *uplo, const char *diag,
-                                   index_t n, double *a, index_t lda,
-                                   index_t *info) {
+void HYHOUND_LINALG_EXPORT xtrtri(const char *uplo, const char *diag, index_t n,
+                                  double *a, index_t lda, index_t *info) {
     dtrtri(uplo, diag, &n, a, &lda, info);
 }
 template <>
-void HYHOUND_LINALG_EXPORT xtrtri(const char *uplo, const char *diag,
-                                   index_t n, float *a, index_t lda,
-                                   index_t *info) {
+void HYHOUND_LINALG_EXPORT xtrtri(const char *uplo, const char *diag, index_t n,
+                                  float *a, index_t lda, index_t *info) {
     strtri(uplo, diag, &n, a, &lda, info);
 }
 
