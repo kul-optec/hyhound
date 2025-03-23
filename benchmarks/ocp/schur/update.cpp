@@ -1,6 +1,6 @@
 #include "ocp/schur.hpp"
 
-#include <hyhound/linalg/blas-interface.hpp>
+#include <guanaqo/blas/hl-blas-interface.hpp>
 
 namespace hyhound::ocp {
 
@@ -20,10 +20,10 @@ static void update_schur_rank_one(SchurFactor &factor,
         factor.e̅ = ocp.G(j).row(i).transpose() * sqrt(abs(Σji));
     factor.ẽ = factor.e̅;
     // e̅ = H ẽ
-    linalg::xtrsv<real_t, index_t>(
+    guanaqo::blas::xtrsv<real_t, index_t>(
         CblasColMajor, CblasLower, CblasNoTrans, CblasNonUnit, Hj.rows(),
         Hj.data(), Hj.outerStride(), factor.ẽ.data(), index_t{1});
-    linalg::xtrsv<real_t, index_t>(
+    guanaqo::blas::xtrsv<real_t, index_t>(
         CblasColMajor, CblasLower, CblasTrans, CblasNonUnit, Hj.rows(),
         Hj.data(), Hj.outerStride(), factor.ẽ.data(), index_t{1});
     factor.ẽ *= (1 / sqrt(1 + copysign(factor.ẽ.dot(factor.e̅), Σji)));
@@ -32,7 +32,7 @@ static void update_schur_rank_one(SchurFactor &factor,
         factor.ψ.bottomRows(ocp.nx).setZero();
     } else {
         auto Fj = ocp.F(j);
-        linalg::xgemv<real_t, index_t>(
+        guanaqo::blas::xgemv<real_t, index_t>(
             CblasColMajor, CblasNoTrans, Fj.rows(), Fj.cols(), real_t{1},
             Fj.data(), Fj.outerStride(), factor.ẽ.data(), index_t{1}, real_t{0},
             factor.ψ.data(), index_t{1});

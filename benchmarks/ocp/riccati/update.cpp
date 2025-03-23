@@ -1,8 +1,8 @@
 #include "ocp/riccati.hpp"
 
 #include <hyhound/householder-updowndate.hpp>
-#include <hyhound/linalg/blas-interface.hpp>
 #include <hyhound/updown.hpp>
+#include <guanaqo/blas/hl-blas-interface.hpp>
 #include <guanaqo/eigen/span.hpp>
 #include <guanaqo/eigen/view.hpp>
 
@@ -33,7 +33,7 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
             auto ΦNJ  = ΦN->leftCols(nJ);
             auto SNJ  = factor.S.leftCols(nJ);
             auto FNm1 = ocp.F(ocp.N - 1);
-            linalg::xgemm<real_t, index_t>(
+            guanaqo::blas::xgemm<real_t, index_t>(
                 CblasColMajor, CblasTrans, CblasNoTrans, ΦNJ.rows(), ΦNJ.cols(),
                 FNm1.rows(), real_t{1}, FNm1.data(), FNm1.outerStride(),
                 YNJ.data(), YNJ.outerStride(), real_t{0}, ΦNJ.data(),
@@ -70,7 +70,7 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
             hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
         if (j > 0) {
             auto FNm1 = ocp.F(j - 1);
-            linalg::xgemm<real_t, index_t>(
+            guanaqo::blas::xgemm<real_t, index_t>(
                 CblasColMajor, CblasTrans, CblasNoTrans, ΦjJ.rows(), ΦjJ.cols(),
                 FNm1.rows(), real_t{1}, FNm1.data(), FNm1.outerStride(),
                 YjJx.data(), YjJx.outerStride(), real_t{0}, ΦjJ.data(),

@@ -22,14 +22,3 @@ using index_t = @HYHOUND_DENSE_INDEX_TYPE@;
 #ifndef HYHOUND_VERIFY_ASSUMPTIONS
 #cmakedefine01 HYHOUND_VERIFY_ASSUMPTIONS
 #endif
-#ifndef HYHOUND_WITH_MKL
-#cmakedefine01 HYHOUND_WITH_MKL
-#endif
-#ifndef HYHOUND_WITH_OPENMP
-#cmakedefine01 HYHOUND_WITH_OPENMP
-#endif
-
-#ifdef __clangd__
-#undef HYHOUND_WITH_OPENMP // clangd sometimes crashes on OpenMP constructs
-#define HYHOUND_WITH_OPENMP 0
-#endif

@@ -5,13 +5,13 @@
 #include <random>
 
 #include <hyhound/householder-updowndate.hpp>
-#include <hyhound/linalg/blas-interface.hpp>
+#include <guanaqo/blas/hl-blas-interface.hpp>
 #include <guanaqo/eigen/view.hpp>
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
 
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
 #include <omp.h>
 #endif
 
@@ -22,8 +22,10 @@ struct ProblemMatrices {
     Eigen::MatrixXd K̃, K, L, A;
 };
 
+constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
+
 ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
     int old_num_threads = omp_get_max_threads();
     omp_set_num_threads(std::thread::hardware_concurrency());
 #endif
@@ -38,23 +40,17 @@ ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
     mat.A.resize(l, m);
     std::ranges::generate(mat.K.reshaped(), [&] { return dist(rng); });
     std::ranges::generate(mat.A.reshaped(), [&] { return dist(rng); });
-    const auto ldK = static_cast<index_t>(mat.K.outerStride()),
-               ldA = static_cast<index_t>(mat.A.outerStride());
-    linalg::xsyrk<real_t, index_t>(CblasColMajor, CblasLower, CblasTrans, n, n,
-                                   1, mat.K.data(), ldK, 0, mat.K̃.data(), ldK);
+    guanaqo::blas::xsyrk_LT(real_t{1}, as_view(mat.K, use_index_t), //
+                            real_t{0}, as_view(mat.K̃, use_index_t));
     mat.K = mat.K̃;
-    linalg::xsyrk<real_t, index_t>(CblasColMajor, CblasLower, CblasNoTrans, l,
-                                   m, 1, mat.A.data(), ldA, 1, mat.K.data(),
-                                   ldK);
-    mat.L          = mat.K.leftCols(n);
-    const auto ldL = static_cast<index_t>(mat.L.outerStride());
-    index_t info   = 0;
-    linalg::xpotrf<real_t, index_t>("L", n, mat.L.data(), ldL, &info);
+    guanaqo::blas::xsyrk_LN(real_t{1}, as_view(mat.A, use_index_t), //
+                            real_t{1}, as_view(mat.K, use_index_t));
+    mat.L = mat.K.leftCols(n);
+    guanaqo::blas::xpotrf_L(as_view(mat.L.topRows(n), use_index_t));
     if (l > n) {
-        linalg::xtrsm<real_t, index_t>(CblasColMajor, CblasRight, CblasLower,
-                                       CblasTrans, CblasNonUnit, l - n, n, 1,
-                                       mat.L.data(), ldL,
-                                       mat.L.bottomRows(l - n).data(), ldL);
+        guanaqo::blas::xtrsm_RLTN(
+            real_t{1}, as_view(mat.L.topRows(n), use_index_t),
+            as_view(mat.L.bottomRows(l - n), use_index_t));
     }
     mat.L.triangularView<Eigen::StrictlyUpper>().setZero();
     mat.K̃.triangularView<Eigen::StrictlyUpper>() =
@@ -62,7 +58,7 @@ ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
     mat.K.triangularView<Eigen::StrictlyUpper>() =
         mat.K.triangularView<Eigen::StrictlyLower>().transpose();
 
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
     omp_set_num_threads(old_num_threads);
 #endif
 
@@ -71,24 +67,23 @@ ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
 
 real_t calculate_error(const ProblemMatrices &matrices,
                        const Eigen::Ref<const Eigen::MatrixX<real_t>> &L̃) {
-    Eigen::MatrixXd E = matrices.K̃;
     const auto n      = static_cast<index_t>(L̃.cols()),
-               l      = static_cast<index_t>(L̃.rows()),
-               ldL̃    = static_cast<index_t>(L̃.outerStride()),
-               ldE    = static_cast<index_t>(E.outerStride());
-#if HYHOUND_WITH_OPENMP
+               l      = static_cast<index_t>(L̃.rows());
+    Eigen::MatrixXd E = matrices.K̃;
+#if GUANAQO_WITH_OPENMP
     int old_num_threads = omp_get_max_threads();
     omp_set_num_threads(std::thread::hardware_concurrency());
 #endif
-    linalg::xsyrk<real_t, index_t>(CblasColMajor, CblasLower, CblasNoTrans, n,
-                                   n, -1, L̃.data(), ldL̃, 1, E.data(), ldE);
+    guanaqo::blas::xsyrk_LN(                            //
+        real_t{-1}, as_view(L̃.topRows(n), use_index_t), //
+        real_t{1}, as_view(E.topLeftCorner(n, n), use_index_t));
     if (l > n) {
-        linalg::xtrsm<real_t, index_t>(
-            CblasColMajor, CblasRight, CblasLower, CblasTrans, CblasNonUnit,
-            l - n, n, 1, L̃.data(), ldL̃, E.bottomRows(l - n).data(), ldE);
+        guanaqo::blas::xtrsm_RLTN(
+            real_t{1}, as_view(L̃.topRows(n), use_index_t),
+            as_view(E.bottomLeftCorner(l - n, n), use_index_t));
         E.bottomLeftCorner(l - n, n) -= L̃.bottomRows(l - n);
     }
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
     omp_set_num_threads(old_num_threads);
 #endif
     E.triangularView<Eigen::StrictlyUpper>().setZero();
@@ -100,6 +95,7 @@ real_t calculate_error(const ProblemMatrices &matrices,
 
 using hyhound::index_t;
 using hyhound::real_t;
+using hyhound::use_index_t;
 
 const auto ε = 10 * std::pow(std::numeric_limits<real_t>::epsilon(), 0.5);
 
@@ -111,9 +107,8 @@ TEST_P(HyHDown, VariousSizes) {
         auto matrices     = hyhound::generate_problem(m, n);
         Eigen::MatrixXd L̃ = matrices.L;
         Eigen::MatrixXd Ã = matrices.A;
-        hyhound::update_cholesky(as_view(L̃, guanaqo::with_index_type<index_t>),
-                                 as_view(Ã, guanaqo::with_index_type<index_t>),
-                                 hyhound::Downdate());
+        hyhound::update_cholesky(as_view(L̃, use_index_t),
+                                 as_view(Ã, use_index_t), hyhound::Downdate());
         real_t residual = hyhound::calculate_error(matrices, L̃);
         EXPECT_LE(residual, ε) << "m=" << m;
     }
@@ -128,9 +123,8 @@ TEST_P(HyHDownRect, VariousSizes) {
         auto matrices     = hyhound::generate_problem(m, n, l);
         Eigen::MatrixXd L̃ = matrices.L;
         Eigen::MatrixXd Ã = matrices.A;
-        hyhound::update_cholesky(as_view(L̃, guanaqo::with_index_type<index_t>),
-                                 as_view(Ã, guanaqo::with_index_type<index_t>),
-                                 hyhound::Downdate());
+        hyhound::update_cholesky(as_view(L̃, use_index_t),
+                                 as_view(Ã, use_index_t), hyhound::Downdate());
         real_t residual = hyhound::calculate_error(matrices, L̃);
         EXPECT_LE(residual, ε) << "l=" << l;
     }

@@ -22,20 +22,17 @@ class HyhoundRecipe(ConanFile):
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
     bool_hyhound_options = {
-        "with_openblas": True,
-        "with_mkl": False,
-        "with_openmp": False,
         "with_benchmarks": False,
     }
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "dense_index_type": ["int", "long", "long long"],
+        "real_type": ["double", "float"],
     } | {k: [True, False] for k in bool_hyhound_options}
     default_options = {
         "shared": False,
         "fPIC": True,
-        "dense_index_type": "long long",
+        "real_type": "double",
     } | bool_hyhound_options
 
     # Sources are located in the same place as this recipe, copy them to the recipe
@@ -60,9 +57,7 @@ class HyhoundRecipe(ConanFile):
     generators = ("CMakeDeps",)
 
     def requirements(self):
-        self.requires("guanaqo/1.0.0-alpha.8", transitive_headers=True)
-        if self.options.with_openblas:
-            self.requires("openblas/0.3.27", transitive_headers=True)
+        self.requires("guanaqo/1.0.0-alpha.11", transitive_headers=True)
         if self.options.with_benchmarks:
             self.requires("benchmark/1.8.4")
             self.requires("gtest/1.15.0")
@@ -76,21 +71,24 @@ class HyhoundRecipe(ConanFile):
             self.options.rm_safe("fPIC")
 
     def configure(self):
-        # There is currently no 64-bit indices option for OpenBLAS using Conan
-        if self.options.with_openblas:
-            self.options.rm_safe("dense_index_type")
+        self.options["guanaqo/*"].with_blas = True
 
     def layout(self):
         cmake_layout(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
-        index_type = self.options.get_safe("dense_index_type", default="int")
-        tc.variables["HYHOUND_DENSE_INDEX_TYPE"] = index_type
         for k in self.bool_hyhound_options:
-            value = getattr(self.options, k, None)
+            value = self.options.get_safe(k)
             if value is not None and value.value is not None:
                 tc.variables["HYHOUND_" + k.upper()] = bool(value)
+        guanaqo = self.dependencies["guanaqo"]
+        index_type = guanaqo.options.get_safe("blas_index_type", default="int")
+        real_type = str(self.options.real_type)
+        print("index_type:", index_type)
+        print("real_type: ", real_type)
+        tc.variables["HYHOUND_DENSE_INDEX_TYPE"] = index_type
+        tc.variables["HYHOUND_DENSE_REAL_TYPE"] = real_type
         if can_run(self):
             tc.variables["HYHOUND_FORCE_TEST_DISCOVERY"] = True
         tc.generate()

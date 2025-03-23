@@ -9,12 +9,6 @@ include(CTest)
 
 # Options
 include(CMakeDependentOption)
-option(HYHOUND_WITH_MKL
-    "Use the Intel MKL" Off)
-option(HYHOUND_WITH_OPENBLAS
-    "Use the OpenBLAS library" Off)
-option(HYHOUND_WITH_OPENMP
-    "Enable parallelization using OpenMP" Off)
 set(HYHOUND_DENSE_REAL_TYPE "double" CACHE STRING
     "The main floating point type for representing real numbers")
 set(HYHOUND_DENSE_INDEX_TYPE "long long" CACHE STRING

@@ -1,9 +1,5 @@
 include(cmake/Library.cmake)
-include(cmake/BLAS.cmake)
 find_package(guanaqo REQUIRED)
-if (HYHOUND_WITH_OPENMP)
-    find_package(OpenMP REQUIRED COMPONENTS CXX)
-endif()
 
 # Configuration options
 # ------------------------------------------------------------------------------
@@ -16,8 +12,6 @@ target_sources(config INTERFACE FILE_SET headers TYPE HEADERS
 )
 target_compile_definitions(config INTERFACE
     $<$<BOOL:${HYHOUND_VERIFY_ASSUMPTIONS}>:HYHOUND_VERIFY_ASSUMPTIONS>
-    $<$<BOOL:${HYHOUND_WITH_MKL}>:HYHOUND_WITH_MKL>
-    $<$<BOOL:${HYHOUND_WITH_OPENMP}>:HYHOUND_WITH_OPENMP>
 )
 hyhound_configure_interface_library(config EXPORT_PREFIX hyhound)
 
@@ -31,27 +25,10 @@ target_sources(util INTERFACE FILE_SET headers TYPE HEADERS
           "util/include/hyhound/loop.hpp"
           "util/include/hyhound/lut.hpp"
           "util/include/hyhound/matrix-view.hpp"
-          "util/include/hyhound/openmp.h"
           "util/include/hyhound/unroll.h"
 )
 target_link_libraries(util INTERFACE hyhound::config guanaqo::guanaqo)
 hyhound_configure_interface_library(util)
-if (HYHOUND_WITH_OPENMP)
-    target_link_libraries(util INTERFACE OpenMP::OpenMP_CXX)
-endif()
-
-# Linear algebra routines and BLAS interface
-# ------------------------------------------------------------------------------
-add_library(linalg "linalg/src/blas-interface.cpp")
-target_sources(linalg PUBLIC FILE_SET headers TYPE HEADERS
-    BASE_DIRS "linalg/include"
-    FILES "linalg/include/hyhound/linalg/blas-interface.hpp"
-          "linalg/include/hyhound/linalg/blas.hpp"
-          "linalg/include/hyhound/linalg/lapack.hpp"
-)
-target_link_libraries(linalg PUBLIC hyhound::util hyhound::blas-lapack-lib)
-target_compile_features(linalg PRIVATE cxx_std_20)
-hyhound_configure_library(linalg EXPORT_PREFIX hyhound)
 
 # Main library for Cholesky factorization up/downdates
 # ------------------------------------------------------------------------------

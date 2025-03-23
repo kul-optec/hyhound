@@ -1,5 +1,5 @@
 #include <hyhound/householder-updowndate.hpp>
-#include <hyhound/linalg/blas-interface.hpp>
+#include <guanaqo/blas/blas-interface.hpp>
 #include <hyhound-version.h>
 
 #include <guanaqo/eigen/view.hpp>
@@ -22,7 +22,7 @@ using hyhound::real_t;
 static constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
 using std::pow;
 
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
 #include <omp.h>
 #include <thread>
 #endif
@@ -47,7 +47,7 @@ struct CholeskyFixture : benchmark::Fixture {
         if (!inserted)
             return it;
 
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
         int old_num_threads = omp_get_max_threads();
         omp_set_num_threads(std::thread::hardware_concurrency() / 2);
 #endif
@@ -60,25 +60,25 @@ struct CholeskyFixture : benchmark::Fixture {
         std::ranges::generate(mat.A.reshaped(), [&] { return dist(rng); });
         const auto ldK = static_cast<index_t>(mat.K.outerStride()),
                    ldA = static_cast<index_t>(mat.A.outerStride());
-        hyhound::linalg::xsyrk<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, n, n, 1, mat.K.data(), ldK,
-            0, mat.K̃.data(), ldK);
+        guanaqo::blas::xsyrk<real_t, index_t>(CblasColMajor, CblasLower,
+                                              CblasTrans, n, n, 1, mat.K.data(),
+                                              ldK, 0, mat.K̃.data(), ldK);
         mat.K = mat.K̃;
-        hyhound::linalg::xsyrk<real_t, index_t>(
+        guanaqo::blas::xsyrk<real_t, index_t>(
             CblasColMajor, CblasLower, CblasNoTrans, n, m, 1, mat.A.data(), ldA,
             1, mat.K.data(), ldK);
         mat.L          = mat.K;
         const auto ldL = static_cast<index_t>(mat.L.outerStride());
         index_t info   = 0;
-        hyhound::linalg::xpotrf<real_t, index_t>("L", n, mat.L.data(), ldL,
-                                                 &info);
+        guanaqo::blas::xpotrf<real_t, index_t>("L", n, mat.L.data(), ldL,
+                                               &info);
         mat.L.triangularView<Eigen::StrictlyUpper>().setZero();
         mat.K̃.triangularView<Eigen::StrictlyUpper>() =
             mat.K̃.triangularView<Eigen::StrictlyLower>().transpose();
         mat.K.triangularView<Eigen::StrictlyUpper>() =
             mat.K.triangularView<Eigen::StrictlyLower>().transpose();
 
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
         omp_set_num_threads(old_num_threads);
 #endif
         using namespace std::chrono_literals;
@@ -100,14 +100,14 @@ struct CholeskyFixture : benchmark::Fixture {
         const auto n      = static_cast<index_t>(L̃.rows()),
                    ldL̃    = static_cast<index_t>(L̃.outerStride()),
                    ldE    = static_cast<index_t>(E.outerStride());
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
         int old_num_threads = omp_get_max_threads();
         omp_set_num_threads(std::thread::hardware_concurrency() / 2);
 #endif
-        hyhound::linalg::xsyrk<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasNoTrans, n, n, -1, L̃.data(), ldL̃, 1,
-            E.data(), ldE);
-#if HYHOUND_WITH_OPENMP
+        guanaqo::blas::xsyrk<real_t, index_t>(CblasColMajor, CblasLower,
+                                              CblasNoTrans, n, n, -1, L̃.data(),
+                                              ldL̃, 1, E.data(), ldE);
+#if GUANAQO_WITH_OPENMP
         omp_set_num_threads(old_num_threads);
 #endif
         E.triangularView<Eigen::StrictlyUpper>().setZero();
@@ -162,11 +162,11 @@ BENCHMARK_DEFINE_F(CholeskyFixture, full_factorize)(benchmark::State &state) {
         benchmark::DoNotOptimize(L̃.data());
         const auto ldA = static_cast<index_t>(matrices->second.A.outerStride());
         const auto ldL = static_cast<index_t>(L̃.outerStride());
-        hyhound::linalg::xsyrk<real_t, index_t>(
+        guanaqo::blas::xsyrk<real_t, index_t>(
             CblasColMajor, CblasLower, CblasNoTrans, n, m, -1,
             matrices->second.A.data(), ldA, 1, L̃.data(), ldL);
         index_t info = 0;
-        hyhound::linalg::xpotrf<real_t, index_t>("L", n, L̃.data(), ldL, &info);
+        guanaqo::blas::xpotrf<real_t, index_t>("L", n, L̃.data(), ldL, &info);
         benchmark::ClobberMemory();
     }
 }
@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
     ::benchmark::Initialize(&argc, argvv.data());
     if (::benchmark::ReportUnrecognizedArguments(argc, argvv.data()))
         return 1;
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
     benchmark::AddCustomContext("OMP_NUM_THREADS",
                                 std::to_string(omp_get_max_threads()));
 #endif

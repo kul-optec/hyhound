@@ -6,8 +6,9 @@ include(GoogleTest)
 # Dependencies
 find_package(GTest REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(guanaqo REQUIRED COMPONENTS BLAS)
 if (NOT TARGET hyhound::hyhound)
-    find_package(hyhound REQUIRED COMPONENTS Linalg)
+    find_package(hyhound REQUIRED)
 endif()
 
 add_executable(tests
@@ -15,7 +16,7 @@ add_executable(tests
     "test-updowndate.cpp"
 )
 target_link_libraries(tests PRIVATE
-    hyhound::hyhound hyhound::linalg hyhound::warnings
+    guanaqo::blas hyhound::hyhound hyhound::warnings
     GTest::gtest_main GTest::gmock
     Eigen3::Eigen)
 

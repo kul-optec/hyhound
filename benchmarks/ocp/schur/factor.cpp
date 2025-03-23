@@ -1,6 +1,6 @@
 #include "ocp/schur.hpp"
 
-#include <hyhound/linalg/blas-interface.hpp>
+#include <guanaqo/blas/hl-blas-interface.hpp>
 
 namespace hyhound::ocp {
 
@@ -13,28 +13,28 @@ void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ) {
     ΣCN = Σ.col(ocp.N).asDiagonal() * CN;
     LxxN.triangularView<Eigen::Lower>() =
         ocp.Q(ocp.N).triangularView<Eigen::Lower>();
-    linalg::xgemmt<real_t, index_t>(
+    guanaqo::blas::xgemmt<real_t, index_t>(
         CblasColMajor, CblasLower, CblasTrans, CblasNoTrans, LxxN.rows(),
         CN.rows(), real_t{1}, CN.data(), CN.outerStride(), ΣCN.data(),
         ΣCN.outerStride(), real_t{1}, LxxN.data(), LxxN.outerStride());
     // Lxx(N) = chol(H(N))
     index_t info = 0;
-    linalg::xpotrf<real_t, index_t>("L", LxxN.rows(), LxxN.data(),
-                                    LxxN.outerStride(), &info);
+    guanaqo::blas::xpotrf<real_t, index_t>("L", LxxN.rows(), LxxN.data(),
+                                           LxxN.outerStride(), &info);
     if (info != 0)
         throw std::runtime_error(std::format(
             "Cholesky failed at stage {} with status {}", ocp.N, info));
     auto WxN                           = factor.Wᵀ(ocp.N).topRows(ocp.nx);
     WxN.triangularView<Eigen::Lower>() = LxxN.triangularView<Eigen::Lower>();
-    linalg::xtrtri<real_t, index_t>("L", "N", WxN.rows(), WxN.data(),
-                                    WxN.outerStride(), &info);
+    guanaqo::blas::xtrtri<real_t, index_t>("L", "N", WxN.rows(), WxN.data(),
+                                           WxN.outerStride(), &info);
     if (info != 0)
         throw std::runtime_error(std::format(
             "Inverse failed at stage {} with status {}", ocp.N, info));
     auto LΨdN                           = factor.LΨd(ocp.N);
     LΨdN.triangularView<Eigen::Lower>() = WxN.triangularView<Eigen::Lower>();
-    linalg::xlauum<real_t, index_t>("L", LΨdN.rows(), LΨdN.data(),
-                                    LΨdN.outerStride(), &info);
+    guanaqo::blas::xlauum<real_t, index_t>("L", LΨdN.rows(), LΨdN.data(),
+                                           LΨdN.outerStride(), &info);
 
     for (index_t j = ocp.N; j-- > 0;) {
         auto Gj       = ocp.G(j);
@@ -47,75 +47,76 @@ void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ) {
         ΣGj = Σ.col(j).asDiagonal() * Gj;
         Lj.triangularView<Eigen::Lower>() =
             ocp.H(j).triangularView<Eigen::Lower>();
-        linalg::xgemmt<real_t, index_t>(
+        guanaqo::blas::xgemmt<real_t, index_t>(
             CblasColMajor, CblasLower, CblasTrans, CblasNoTrans, Lj.rows(),
             ocp.ny, real_t{1}, Gj.data(), Gj.outerStride(), ΣGj.data(),
             ΣGj.outerStride(), real_t{1}, Lj.data(), Lj.outerStride());
-        linalg::xpotrf<real_t, index_t>("L", Lj.rows(), Lj.data(),
-                                        Lj.outerStride(), &info);
+        guanaqo::blas::xpotrf<real_t, index_t>("L", Lj.rows(), Lj.data(),
+                                               Lj.outerStride(), &info);
         if (info != 0)
             throw std::runtime_error(std::format(
                 "Cholesky failed at stage {} with status {}", j, info));
         // V = F L⁻ᵀ
         auto Vj = factor.V(j);
         Vj      = ocp.F(j);
-        linalg::xtrsm<real_t, index_t>(
+        guanaqo::blas::xtrsm<real_t, index_t>(
             CblasColMajor, CblasRight, CblasLower, CblasTrans, CblasNonUnit,
             Vj.rows(), Vj.cols(), real_t{1}, Lj.data(), Lj.outerStride(),
             Vj.data(), Vj.outerStride());
         // VVᵀ
-        linalg::xsyrk<real_t, index_t>(CblasColMajor, CblasLower, CblasNoTrans,
-                                       LΨd_next.rows(), Vj.cols(), real_t{1},
-                                       Vj.data(), Vj.outerStride(), real_t{1},
-                                       LΨd_next.data(), LΨd_next.outerStride());
+        guanaqo::blas::xsyrk<real_t, index_t>(
+            CblasColMajor, CblasLower, CblasNoTrans, LΨd_next.rows(), Vj.cols(),
+            real_t{1}, Vj.data(), Vj.outerStride(), real_t{1}, LΨd_next.data(),
+            LΨd_next.outerStride());
         // chol(Θ + VVᵀ)
-        linalg::xpotrf<real_t, index_t>("L", LΨd_next.rows(), LΨd_next.data(),
-                                        LΨd_next.outerStride(), &info);
+        guanaqo::blas::xpotrf<real_t, index_t>("L", LΨd_next.rows(),
+                                               LΨd_next.data(),
+                                               LΨd_next.outerStride(), &info);
         if (info != 0)
             throw std::runtime_error(std::format(
                 "Cholesky Ψ failed at stage {} with status {}", j + 1, info));
         // W = (I 0) L⁻ᵀ
         auto Wᵀj = factor.Wᵀ(j);
         Wᵀj      = Lj.topLeftCorner(ocp.nx + ocp.nu, ocp.nx);
-        linalg::xtrtri<real_t, index_t>("L", "N", ocp.nx, Wᵀj.data(),
-                                        Wᵀj.outerStride(), &info);
+        guanaqo::blas::xtrtri<real_t, index_t>("L", "N", ocp.nx, Wᵀj.data(),
+                                               Wᵀj.outerStride(), &info);
         if (info != 0)
             throw std::runtime_error(std::format(
                 "Inverse failed at stage {} with status {}", j, info));
         auto Wᵀxj = Wᵀj.topRows(ocp.nx), Wᵀuj = Wᵀj.bottomRows(ocp.nu);
-        linalg::xtrmm<real_t, index_t>(
+        guanaqo::blas::xtrmm<real_t, index_t>(
             CblasColMajor, CblasRight, CblasLower, CblasNoTrans, CblasNonUnit,
             Wᵀuj.rows(), Wᵀuj.cols(), real_t(-1), Wᵀxj.data(),
             Wᵀxj.outerStride(), Wᵀuj.data(), Wᵀuj.outerStride());
         auto Luuj = Lj.bottomRightCorner(ocp.nu, ocp.nu);
-        linalg::xtrsm<real_t, index_t>(
+        guanaqo::blas::xtrsm<real_t, index_t>(
             CblasColMajor, CblasLeft, CblasLower, CblasNoTrans, CblasNonUnit,
             Wᵀuj.rows(), Wᵀuj.cols(), real_t{1}, Luuj.data(),
             Luuj.outerStride(), Wᵀuj.data(), Wᵀuj.outerStride());
         // -WVᵀ
-        linalg::xgemm<real_t, index_t>(
+        guanaqo::blas::xgemm<real_t, index_t>(
             CblasColMajor, CblasTrans, CblasTrans, LΨsj.rows(), LΨsj.cols(),
             Wᵀj.rows(), real_t{-1}, Wᵀj.data(), Wᵀj.outerStride(), Vj.data(),
             Vj.outerStride(), real_t{0}, LΨsj.data(), LΨsj.outerStride());
-        linalg::xtrsm<real_t, index_t>(
+        guanaqo::blas::xtrsm<real_t, index_t>(
             CblasColMajor, CblasRight, CblasLower, CblasTrans, CblasNonUnit,
             LΨsj.rows(), LΨsj.cols(), real_t{1}, LΨd_next.data(),
             LΨd_next.outerStride(), LΨsj.data(), LΨsj.outerStride());
         // WWᵀ
-        linalg::xsyrk<real_t, index_t>(CblasColMajor, CblasLower, CblasTrans,
-                                       LΨdj.rows(), Wᵀj.rows(), real_t{1},
-                                       Wᵀj.data(), Wᵀj.outerStride(), real_t{0},
-                                       LΨdj.data(), LΨdj.outerStride());
+        guanaqo::blas::xsyrk<real_t, index_t>(
+            CblasColMajor, CblasLower, CblasTrans, LΨdj.rows(), Wᵀj.rows(),
+            real_t{1}, Wᵀj.data(), Wᵀj.outerStride(), real_t{0}, LΨdj.data(),
+            LΨdj.outerStride());
         // -LΨs LΨsᵀ
-        linalg::xsyrk<real_t, index_t>(
+        guanaqo::blas::xsyrk<real_t, index_t>(
             CblasColMajor, CblasLower, CblasNoTrans, LΨdj.rows(), LΨsj.cols(),
             real_t{-1}, LΨsj.data(), LΨsj.outerStride(), real_t{1}, LΨdj.data(),
             LΨdj.outerStride());
     }
     // chol(Θ)
     auto LΨd0 = factor.LΨd(0);
-    linalg::xpotrf<real_t, index_t>("L", LΨd0.rows(), LΨd0.data(),
-                                    LΨd0.outerStride(), &info);
+    guanaqo::blas::xpotrf<real_t, index_t>("L", LΨd0.rows(), LΨd0.data(),
+                                           LΨd0.outerStride(), &info);
     if (info != 0)
         throw std::runtime_error(std::format(
             "Cholesky Ψ failed at stage {} with status {}", 0, info));

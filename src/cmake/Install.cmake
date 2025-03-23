@@ -77,30 +77,8 @@ if (HYHOUND_CORE_TARGETS)
     list(APPEND HYHOUND_INSTALL_TARGETS ${HYHOUND_CORE_TARGETS})
 endif()
 
-# Install the linalg targets
-set(HYHOUND_LINALG_HIDDEN_TARGETS blas-lapack-lib)
-set(HYHOUND_LINALG_TARGETS)
-hyhound_add_if_target_exists(HYHOUND_LINALG_TARGETS linalg)
-if (HYHOUND_LINALG_TARGETS)
-    install(TARGETS ${HYHOUND_LINALG_HIDDEN_TARGETS} ${HYHOUND_LINALG_TARGETS}
-        EXPORT hyhoundLinalgTargets
-        RUNTIME DESTINATION "${HYHOUND_INSTALL_BINDIR}"
-            COMPONENT lib
-        LIBRARY DESTINATION "${HYHOUND_INSTALL_LIBDIR}"
-            COMPONENT lib
-            NAMELINK_COMPONENT dev
-        ARCHIVE DESTINATION "${HYHOUND_INSTALL_LIBDIR}"
-            COMPONENT dev
-        FILE_SET headers DESTINATION "${HYHOUND_INSTALL_INCLUDEDIR}"
-            COMPONENT dev)
-    hyhound_install_config(Linalg dev)
-    list(JOIN HYHOUND_LINALG_TARGETS ", " TGTS)
-    string(APPEND HYHOUND_INSTALLED_TARGETS_MSG " * Linalg:  ${TGTS}\n")
-    list(APPEND HYHOUND_INSTALL_TARGETS ${HYHOUND_LINALG_TARGETS})
-endif()
-
 # Install the debug files
-foreach(target IN LISTS HYHOUND_CORE_TARGETS HYHOUND_LINALG_TARGETS)
+foreach(target IN LISTS HYHOUND_CORE_TARGETS)
     get_target_property(target_type ${target} TYPE)
     if (${target_type} STREQUAL "SHARED_LIBRARY")
         hyhound_install_debug_syms(${target} debug
@@ -115,7 +93,7 @@ endforeach()
 
 # Make stand-alone
 if (HYHOUND_STANDALONE)
-    foreach(target IN LISTS HYHOUND_CORE_TARGETS HYHOUND_LINALG_TARGETS)
+    foreach(target IN LISTS HYHOUND_CORE_TARGETS)
         set_target_properties(${TGT} PROPERTIES
             INSTALL_RPATH "$ORIGIN;$ORIGIN/${HYHOUND_INSTALL_LIBRELBINDIR}")
     endforeach()

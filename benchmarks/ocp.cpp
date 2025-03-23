@@ -1,4 +1,5 @@
 #include <benchmark/benchmark.h>
+#include <guanaqo/openmp.h>
 #include <hyhound-version.h>
 #include <utility>
 
@@ -103,7 +104,7 @@ int main(int argc, char **argv) {
     ::benchmark::Initialize(&argc, argv);
     if (::benchmark::ReportUnrecognizedArguments(argc, argv))
         return 1;
-#if HYHOUND_WITH_OPENMP
+#if GUANAQO_WITH_OPENMP
     benchmark::AddCustomContext("OMP_NUM_THREADS",
                                 std::to_string(omp_get_max_threads()));
 #endif

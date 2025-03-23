@@ -1,7 +1,6 @@
 #pragma once
 
 #include <hyhound/config.hpp>
-#include <hyhound/openmp.h>
 
 namespace hyhound {
 
