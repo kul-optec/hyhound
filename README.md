@@ -16,7 +16,9 @@ conan profile detect ||:
 conan install . --build=missing -pr profiles/desktop \
     -s build_type=Release \
     -c tools.build:skip_test=True \
-    -o \&:with_openmp=True -o \&:with_openblas=False -o \&:with_mkl=True \
+    -o guanaqo/\*:with_openmp=True \
+    -o guanaqo/\*:with_blas=True \
+    -o guanaqo/\*:with_mkl=False \
     -o \&:with_benchmarks=True
 cmake --preset conan-default
 cmake --build --preset conan-release -j
