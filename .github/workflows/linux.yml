@@ -26,7 +26,6 @@ jobs:
         -s build_type=Release
         -c tools.build:skip_test=True
         -o guanaqo/\*:with_openmp=True
-        -o guanaqo/\*:with_blas=True
         -o guanaqo/\*:with_mkl=False
         -o \&:with_benchmarks=True
 
