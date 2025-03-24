@@ -69,6 +69,11 @@ set(CMAKE_DEBUG_POSTFIX "_d")
 set(CMAKE_RELWITHDEBINFO_POSTFIX "_rd")
 set(CMAKE_MINSIZEREL_POSTFIX "_rs")
 
+# Locating dependencies
+if (DEFINED ENV{MKLROOT})
+    list(PREPEND CMAKE_FIND_ROOT_PATH "$ENV{MKLROOT}")
+endif()
+
 # Libraries
 add_subdirectory(src)
 
