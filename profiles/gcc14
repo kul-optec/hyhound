@@ -5,6 +5,8 @@ compiler.cppstd=gnu23
 compiler.libcxx=libstdc++11
 compiler.version=14
 os=Linux
+# https://github.com/conan-io/conan/issues/18008
+openblas/*:build_type=Release
 
 [tool_requires]
 tttapa-toolchains/1.0.2
