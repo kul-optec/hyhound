@@ -65,6 +65,7 @@ class HyhoundRecipe(ConanFile):
         else:
             self.test_requires("gtest/1.15.0")
             self.test_requires("eigen/tttapa.20240516", force=True)
+        self.tool_requires("cmake/[>=3.24 <4]")
 
     def config_options(self):
         if self.settings.get_safe("os") == "Windows":

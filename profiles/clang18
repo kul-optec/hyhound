@@ -9,6 +9,8 @@ os=Linux
 [tool_requires]
 tttapa-toolchains-clang/1.0.1
 mold/2.32.1
+ninja/1.12.1
+cmake/[>=3.24 <4]
 
 [buildenv]
 MKLROOT={{ os.getenv("MKLROOT") or os.path.join(os.getenv("HOME"), "intel/oneapi/mkl/latest")}}
@@ -21,5 +23,5 @@ tools.build:compiler_executables*={"c": "clang-18", "cpp": "clang++-18", "fortra
 tools.cmake.cmaketoolchain:generator=Ninja Multi-Config
 tools.build:exelinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
 tools.build:sharedlinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
-tools.build:exelinkflags+=["-fuse-ld=mold"]
-tools.build:sharedlinkflags+=["-fuse-ld=mold"]
+tools.build:exelinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]
+tools.build:sharedlinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]

@@ -18,10 +18,9 @@ When $m \ll n$, this results in a considerable speedup over full factorization,
 enabling efficient low-rank updates of Cholesky factorizations, for use in e.g.
 iterative algorithms for numerical optimization.
 
-## Instructions for building hyhound from source (Linux)
+## Building hyhound from source (Linux)
 
-Requirements: [CMake](https://cmake.org/) (≥3.24), [Ninja](https://ninja-build.org/),
-[Conan](https://conan.io/) (2.12.2), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
+Requirements: [Conan](https://conan.io/) (2.12.2), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
 
 ```sh
 git clone https://github.com/kul-optec/hyhound
@@ -36,6 +35,7 @@ conan install . --build=missing -pr profiles/desktop \
     -o guanaqo/\*:with_blas=True \
     -o guanaqo/\*:with_mkl=True \
     -o \&:with_benchmarks=True
+. build/generators/conanbuild.sh
 cmake --preset conan-default
 cmake --build --preset conan-release -j
 ```
@@ -48,7 +48,7 @@ OpenBLAS can be used instead of the Intel MKL by passing the option
 `-o guanaqo/\*:with_mkl=False` to Conan. Be sure to use CMake's
 `--fresh` flag to reconfigure the project after making this change.
 
-Only libstdc++ version 14 is currently supported (GCC 14 or Clang 18).
+Only libstdc++ is currently supported (GCC 12-14 or Clang 18-20).
 
 #### Reproducing the benchmark results
 
