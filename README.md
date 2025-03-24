@@ -22,19 +22,28 @@ iterative algorithms for numerical optimization.
 
 Requirements: [Conan](https://conan.io/) (2.12.2), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
 
+If this is your first time using Conan, create a default profile for your system:
+```sh
+conan profile detect
+```
+Download the source code and recipes for building the dependencies:
 ```sh
 git clone https://github.com/kul-optec/hyhound
 cd hyhound
 git clone https://github.com/tttapa/conan-recipes
 conan remote add tttapa-conan-recipes "$PWD/conan-recipes"
-conan profile detect ||:
+```
+Install the dependencies using Conan:
+```sh
 conan install . --build=missing -pr profiles/desktop \
     -s build_type=Release \
     -c tools.build:skip_test=True \
     -o guanaqo/\*:with_openmp=True \
-    -o guanaqo/\*:with_blas=True \
     -o guanaqo/\*:with_mkl=True \
     -o \&:with_benchmarks=True
+```
+Configure and build the hyhound library and benchmarks:
+```sh
 . build/generators/conanbuild.sh
 cmake --preset conan-default
 cmake --build --preset conan-release -j
@@ -55,7 +64,7 @@ Only libstdc++ is currently supported (GCC 12-14 or Clang 18-20).
 ```sh
 OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-hyh \
     --benchmark_out=hyh.json --benchmark_repetitions=5 --benchmark_min_time=0.02s \
-    --benchmark_enable_random_interleaving
+    --benchmark_enable_random_interleaving --fix-n --n=64
 ```
 ```sh
 OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-ocp \
