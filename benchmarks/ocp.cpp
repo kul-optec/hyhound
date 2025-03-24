@@ -22,14 +22,14 @@ auto generate_ocp(index_t ny) {
 }
 
 void bm_factor_riccati(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     RiccatiFactor fac{.ocp = ocp};
     for (auto _ : state)
         factor(fac, Σ);
 }
 
 void bm_solve_riccati(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     RiccatiFactor fac{.ocp = ocp};
     factor(fac, Σ);
     for (auto _ : state)
@@ -41,7 +41,7 @@ void bm_update_riccati(benchmark::State &state) {
     std::normal_distribution<real_t> nrml{0, 10};
     std::bernoulli_distribution bern{0.25};
 
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     RiccatiFactor fac{.ocp = ocp};
     mat ΔΣ = Σ;
     for (auto _ : state) {
@@ -56,7 +56,7 @@ void bm_update_riccati(benchmark::State &state) {
 }
 
 void bm_factor_schur(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
     SchurFactor factor_sch{.ocp = ocp_sch};
     for (auto _ : state)
@@ -64,7 +64,7 @@ void bm_factor_schur(benchmark::State &state) {
 }
 
 void bm_solve_schur(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
     SchurFactor factor_sch{.ocp = ocp_sch};
     factor(factor_sch, Σ);
@@ -77,7 +77,7 @@ void bm_update_schur(benchmark::State &state) {
     std::normal_distribution<real_t> nrml{0, 10};
     std::bernoulli_distribution bern{0.25};
 
-    auto [ocp, Σ] = generate_ocp(state.range(0));
+    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
     auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
     SchurFactor factor_sch{.ocp = ocp_sch};
     mat ΔΣ = Σ;
