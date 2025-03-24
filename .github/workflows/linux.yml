@@ -5,8 +5,11 @@ on:
 
 jobs:
   build:
+    name: "Build (GCC ${{ matrix.gcc }}, ${{ matrix.build_type }}, ${{ matrix.profile }})"
     strategy:
       matrix:
+        gcc: ["12", "14"]
+        build_type: ["Release", "Debug"]
         profile: ["laptop"]
       fail-fast: false
     runs-on: ubuntu-24.04
@@ -18,12 +21,13 @@ jobs:
     - name: Setup Conan and sccache
       uses: ./.github/workflows/setup-conan
       with:
-        cache-key: ${{ matrix.profile }}
+        cache-key: ${{ matrix.profile }}-${{ matrix.gcc }}-${{ matrix.build_type }}
 
     - name: Build
       run: >
         conan create . --build=missing -pr profiles/${{ matrix.profile }}
-        -s build_type=Release
+        -s compiler.version=${{ matrix.gcc }}
+        -s build_type=${{ matrix.build_type }}
         -c tools.build:skip_test=False
         -o guanaqo/\*:with_openmp=True
         -o guanaqo/\*:with_mkl=False
