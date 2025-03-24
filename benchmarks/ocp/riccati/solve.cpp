@@ -48,22 +48,19 @@ void solve(RiccatiFactor &factor) {
                                as_view(Pe_next, use_index_t), real_t{1},
                                as_view(p, use_index_t));
         // qₖ + Aₖᵀ (Pₖ₊₁ eₖ₊₁ + pₖ₊₁) - Lxuᵀ lₖ
-        guanaqo::blas::xgemv<real_t, index_t>(
-            CblasColMajor, CblasNoTrans, Lxu.rows(), Lxu.cols(), real_t{-1},
-            Lxu.data(), Lxu.outerStride(), u.data(), index_t{1}, real_t{1},
-            p.data(), index_t{1});
+        guanaqo::blas::xgemv_N(real_t{-1}, as_view(Lxu, use_index_t),
+                               as_view(u, use_index_t), real_t{1},
+                               as_view(p, use_index_t));
     }
     {
         auto Lxx        = factor.Lxx(0);
         auto x0         = factor.x(0);
         x0              = ocp.es.col(0);
         factor.λ.col(0) = x0;
-        guanaqo::blas::xtrmv<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, CblasNonUnit, Lxx.rows(),
-            Lxx.data(), Lxx.outerStride(), factor.λ.col(0).data(), index_t{1});
-        guanaqo::blas::xtrmv<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasNoTrans, CblasNonUnit, Lxx.rows(),
-            Lxx.data(), Lxx.outerStride(), factor.λ.col(0).data(), index_t{1});
+        guanaqo::blas::xtrmv_LTN(as_view(Lxx, use_index_t),
+                                 as_view(factor.λ.col(0), use_index_t));
+        guanaqo::blas::xtrmv_LNN(as_view(Lxx, use_index_t),
+                                 as_view(factor.λ.col(0), use_index_t));
         factor.λ.col(0) += factor.p.col(0);
     }
     for (index_t k = 0; k < ocp.N; ++k) {
@@ -72,28 +69,21 @@ void solve(RiccatiFactor &factor) {
              Lxu      = L.bottomLeftCorner(ocp.nx, ocp.nu);
         auto Lxx_next = factor.Lxx(k + 1);
         auto u = factor.u(k), x = factor.x(k), x_next = factor.x(k + 1);
-        guanaqo::blas::xgemv<real_t, index_t>(
-            CblasColMajor, CblasTrans, Lxu.rows(), Lxu.cols(), real_t{-1},
-            Lxu.data(), Lxu.outerStride(), x.data(), index_t{1}, real_t{-1},
-            u.data(), index_t{1});
-        guanaqo::blas::xtrsv<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, CblasNonUnit, Luu.rows(),
-            Luu.data(), Luu.outerStride(), u.data(), index_t{1});
+        guanaqo::blas::xgemv_T(real_t{-1}, as_view(Lxu, use_index_t),
+                               as_view(x, use_index_t), real_t{-1},
+                               as_view(u, use_index_t));
+        guanaqo::blas::xtrsv_LTN(as_view(Luu, use_index_t),
+                                 as_view(u, use_index_t));
         x_next  = ocp.es.col(k + 1);
         auto BA = ocp.F(k);
-        guanaqo::blas::xgemv<real_t, index_t>(
-            CblasColMajor, CblasNoTrans, BA.rows(), BA.cols(), real_t{1},
-            BA.data(), BA.outerStride(), factor.ux.col(k).data(), index_t{1},
-            real_t{1}, x_next.data(), index_t{1});
+        guanaqo::blas::xgemv_N(real_t{1}, as_view(BA, use_index_t),
+                               as_view(factor.ux.col(k), use_index_t),
+                               real_t{1}, as_view(x_next, use_index_t));
         factor.λ.col(k + 1) = x_next;
-        guanaqo::blas::xtrmv<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, CblasNonUnit,
-            Lxx_next.rows(), Lxx_next.data(), Lxx_next.outerStride(),
-            factor.λ.col(k + 1).data(), index_t{1});
-        guanaqo::blas::xtrmv<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasNoTrans, CblasNonUnit,
-            Lxx_next.rows(), Lxx_next.data(), Lxx_next.outerStride(),
-            factor.λ.col(k + 1).data(), index_t{1});
+        guanaqo::blas::xtrmv_LTN(as_view(Lxx_next, use_index_t),
+                                 as_view(factor.λ.col(k + 1), use_index_t));
+        guanaqo::blas::xtrmv_LNN(as_view(Lxx_next, use_index_t),
+                                 as_view(factor.λ.col(k + 1), use_index_t));
         factor.λ.col(k + 1) += factor.p.col(k + 1);
     }
 }

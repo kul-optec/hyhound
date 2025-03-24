@@ -1,8 +1,11 @@
 #include "ocp/schur.hpp"
 
 #include <guanaqo/blas/hl-blas-interface.hpp>
+#include <guanaqo/eigen/view.hpp>
 
 namespace hyhound::ocp {
+
+constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
 
 static void update_schur_rank_one(SchurFactor &factor,
                                   index_t j /* stage index */,
@@ -14,29 +17,25 @@ static void update_schur_rank_one(SchurFactor &factor,
     using std::sqrt;
     auto Hj = j == ocp.N ? Eigen::Ref<mat>(factor.LHxx(j))
                          : Eigen::Ref<mat>(factor.LH(j));
+    auto e̅  = factor.e̅.topRows(j == ocp.N ? ocp.nx : ocp.nx + ocp.nu);
+    auto ẽ  = factor.ẽ.topRows(j == ocp.N ? ocp.nx : ocp.nx + ocp.nu);
     if (j == ocp.N)
-        factor.e̅.topRows(ocp.nx) = ocp.C(j).row(i).transpose() * sqrt(abs(Σji));
+        e̅ = ocp.C(j).row(i).transpose() * sqrt(abs(Σji));
     else
-        factor.e̅ = ocp.G(j).row(i).transpose() * sqrt(abs(Σji));
-    factor.ẽ = factor.e̅;
+        e̅ = ocp.G(j).row(i).transpose() * sqrt(abs(Σji));
+    ẽ = e̅;
     // e̅ = H ẽ
-    guanaqo::blas::xtrsv<real_t, index_t>(
-        CblasColMajor, CblasLower, CblasNoTrans, CblasNonUnit, Hj.rows(),
-        Hj.data(), Hj.outerStride(), factor.ẽ.data(), index_t{1});
-    guanaqo::blas::xtrsv<real_t, index_t>(
-        CblasColMajor, CblasLower, CblasTrans, CblasNonUnit, Hj.rows(),
-        Hj.data(), Hj.outerStride(), factor.ẽ.data(), index_t{1});
-    factor.ẽ *= (1 / sqrt(1 + copysign(factor.ẽ.dot(factor.e̅), Σji)));
+    guanaqo::blas::xtrsv_LNN(as_view(Hj, use_index_t), as_view(ẽ, use_index_t));
+    guanaqo::blas::xtrsv_LTN(as_view(Hj, use_index_t), as_view(ẽ, use_index_t));
+    ẽ *= (1 / sqrt(1 + copysign(ẽ.dot(e̅), Σji)));
     if (j == ocp.N) {
-        factor.ψ.topRows(ocp.nx) = -factor.ẽ.topRows(ocp.nx);
+        factor.ψ.topRows(ocp.nx) = -ẽ.topRows(ocp.nx);
         factor.ψ.bottomRows(ocp.nx).setZero();
     } else {
-        auto Fj = ocp.F(j);
-        guanaqo::blas::xgemv<real_t, index_t>(
-            CblasColMajor, CblasNoTrans, Fj.rows(), Fj.cols(), real_t{1},
-            Fj.data(), Fj.outerStride(), factor.ẽ.data(), index_t{1}, real_t{0},
-            factor.ψ.data(), index_t{1});
-        factor.ψ.bottomRows(ocp.nx) = -factor.ẽ.topRows(ocp.nx);
+        guanaqo::blas::xgemv_N(real_t{1}, as_view(ocp.F(j), use_index_t),
+                               as_view(ẽ, use_index_t), real_t{0},
+                               as_view(factor.ψ.topRows(ocp.nx), use_index_t));
+        factor.ψ.bottomRows(ocp.nx) = -ẽ.topRows(ocp.nx);
     }
     real_t α                    = -copysign(real_t{1}, Σji);
     index_t last_affected_stage = j == ocp.N ? j : j + 1;
@@ -72,7 +71,7 @@ static void update_schur_rank_one(SchurFactor &factor,
     // Gill et al. Algorithm C1 for updating LH
     α = copysign(real_t{1}, Σji);
     for (index_t r = 0; r < Hj.cols(); ++r) {
-        real_t p     = factor.e̅(r);
+        real_t p     = e̅(r);
         real_t λ     = Hj(r, r);
         real_t d     = λ * λ;
         real_t d̃     = d + α * (p * p);
@@ -80,7 +79,7 @@ static void update_schur_rank_one(SchurFactor &factor,
         real_t inv_d̃ = 1 / d̃;
         real_t b     = p * α * inv_d̃;
 
-        auto ad = factor.e̅.middleRows(r, Hj.rows() - r);
+        auto ad = e̅.middleRows(r, Hj.rows() - r);
         auto ld = Hj.col(r).middleRows(r, Hj.rows() - r);
         ad -= (p / λ) * ld;
         ld    = (λ̃ / λ) * ld + (b * λ̃) * ad;

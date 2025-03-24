@@ -8,6 +8,8 @@
 
 namespace hyhound::ocp {
 
+constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
+
 void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
     using std::abs;
     using std::copysign;
@@ -29,18 +31,16 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
             ++nJ;
         }
         if (nJ > 0) {
-            auto YNJ  = YN->leftCols(nJ).bottomRows(ocp.nx);
-            auto ΦNJ  = ΦN->leftCols(nJ);
-            auto SNJ  = factor.S.leftCols(nJ);
-            auto FNm1 = ocp.F(ocp.N - 1);
-            guanaqo::blas::xgemm<real_t, index_t>(
-                CblasColMajor, CblasTrans, CblasNoTrans, ΦNJ.rows(), ΦNJ.cols(),
-                FNm1.rows(), real_t{1}, FNm1.data(), FNm1.outerStride(),
-                YNJ.data(), YNJ.outerStride(), real_t{0}, ΦNJ.data(),
-                ΦNJ.outerStride());
+            auto YNJ = YN->leftCols(nJ).bottomRows(ocp.nx);
+            auto ΦNJ = ΦN->leftCols(nJ);
+            auto SNJ = factor.S.leftCols(nJ);
+            guanaqo::blas::xgemm_TN(real_t{1},
+                                    as_view(ocp.F(ocp.N - 1), use_index_t),
+                                    as_view(YNJ, use_index_t), real_t{0},
+                                    as_view(ΦNJ, use_index_t));
             update_cholesky(
-                guanaqo::as_view(LxxN, guanaqo::with_index_type<index_t>),
-                guanaqo::as_view(YNJ, guanaqo::with_index_type<index_t>),
+                guanaqo::as_view(LxxN, use_index_t),
+                guanaqo::as_view(YNJ, use_index_t),
                 hyhound::UpDowndate{guanaqo::as_span(SNJ.reshaped())});
         }
     }
@@ -64,22 +64,17 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
         auto Lj     = factor.L(j);
         auto Luuxuj = Lj.leftCols(ocp.nu);
         auto Lxxj   = Lj.bottomRightCorner(ocp.nx, ocp.nx);
-        update_cholesky(
-            guanaqo::as_view(Luuxuj, guanaqo::with_index_type<index_t>),
-            guanaqo::as_view(YjJ, guanaqo::with_index_type<index_t>),
-            hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
-        if (j > 0) {
-            auto FNm1 = ocp.F(j - 1);
-            guanaqo::blas::xgemm<real_t, index_t>(
-                CblasColMajor, CblasTrans, CblasNoTrans, ΦjJ.rows(), ΦjJ.cols(),
-                FNm1.rows(), real_t{1}, FNm1.data(), FNm1.outerStride(),
-                YjJx.data(), YjJx.outerStride(), real_t{0}, ΦjJ.data(),
-                ΦjJ.outerStride());
-        }
-        update_cholesky(
-            guanaqo::as_view(Lxxj, guanaqo::with_index_type<index_t>),
-            guanaqo::as_view(YjJx, guanaqo::with_index_type<index_t>),
-            hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
+        update_cholesky(guanaqo::as_view(Luuxuj, use_index_t),
+                        guanaqo::as_view(YjJ, use_index_t),
+                        hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
+        if (j > 0)
+            guanaqo::blas::xgemm_TN(real_t{1},
+                                    as_view(ocp.F(j - 1), use_index_t),
+                                    as_view(YjJx, use_index_t), real_t{0},
+                                    as_view(ΦjJ, use_index_t));
+        update_cholesky(guanaqo::as_view(Lxxj, use_index_t),
+                        guanaqo::as_view(YjJx, use_index_t),
+                        hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
     }
 }
 

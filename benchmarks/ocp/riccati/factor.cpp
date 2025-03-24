@@ -1,8 +1,11 @@
 #include "ocp/riccati.hpp"
 
 #include <guanaqo/blas/hl-blas-interface.hpp>
+#include <guanaqo/eigen/view.hpp>
 
 namespace hyhound::ocp {
+
+constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
 
 void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ) {
     const auto &ocp = factor.ocp;
@@ -14,17 +17,11 @@ void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ) {
         ΣCN = Σ.col(ocp.N).asDiagonal() * CN;
         LxxN.triangularView<Eigen::Lower>() =
             ocp.Q(ocp.N).triangularView<Eigen::Lower>();
-        guanaqo::blas::xgemmt<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, CblasNoTrans, LxxN.rows(),
-            CN.rows(), real_t{1}, CN.data(), CN.outerStride(), ΣCN.data(),
-            ΣCN.outerStride(), real_t{1}, LxxN.data(), LxxN.outerStride());
+        guanaqo::blas::xgemmt_LTN(real_t{1}, as_view(CN, use_index_t),
+                                  as_view(ΣCN, use_index_t), real_t{1},
+                                  as_view(LxxN, use_index_t));
         // Lxx(N) = chol(H(N))
-        index_t info = 0;
-        guanaqo::blas::xpotrf<real_t, index_t>("L", LxxN.rows(), LxxN.data(),
-                                               LxxN.outerStride(), &info);
-        if (info != 0)
-            throw std::runtime_error(std::format(
-                "Cholesky failed at stage {} with status {}", ocp.N, info));
+        guanaqo::blas::xpotrf_L(as_view(LxxN, use_index_t));
     }
     for (index_t j = ocp.N; j-- > 0;) {
         auto Gj       = ocp.G(j);
@@ -34,7 +31,7 @@ void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ) {
         auto &Vᵀ      = factor.Vᵀ;
         // V(j) = F(j)ᵀ Lxx(j+1), Vᵀ = Lxx(j+1)ᵀ F(j)
         Vᵀ = ocp.F(j);
-        guanaqo::blas::xtrmm<real_t, index_t>(
+        guanaqo::blas::xtrmm<real_t, index_t>( // TODO
             CblasColMajor, CblasLeft, CblasLower, CblasTrans, CblasNonUnit,
             Vᵀ.rows(), Vᵀ.cols(), real_t{1}, Lxx_next.data(),
             Lxx_next.outerStride(), Vᵀ.data(), Vᵀ.outerStride());
@@ -42,21 +39,13 @@ void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ) {
         ΣGj = Σ.col(j).asDiagonal() * Gj;
         Lj.triangularView<Eigen::Lower>() =
             ocp.H(j).triangularView<Eigen::Lower>();
-        guanaqo::blas::xgemmt<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, CblasNoTrans, Lj.rows(),
-            ocp.ny, real_t{1}, Gj.data(), Gj.outerStride(), ΣGj.data(),
-            ΣGj.outerStride(), real_t{1}, Lj.data(), Lj.outerStride());
-        guanaqo::blas::xsyrk<real_t, index_t>(
-            CblasColMajor, CblasLower, CblasTrans, Lj.rows(), Vᵀ.rows(),
-            real_t{1}, Vᵀ.data(), Vᵀ.outerStride(), real_t{1}, Lj.data(),
-            Lj.outerStride());
+        guanaqo::blas::xgemmt_LTN(real_t{1}, as_view(Gj, use_index_t),
+                                  as_view(ΣGj, use_index_t), real_t{1},
+                                  as_view(Lj, use_index_t));
+        guanaqo::blas::xsyrk_LT(real_t{1}, as_view(Vᵀ, use_index_t), real_t{1},
+                                as_view(Lj, use_index_t));
         // L(j) = chol(H(j))
-        index_t info;
-        guanaqo::blas::xpotrf<real_t, index_t>("L", Lj.rows(), Lj.data(),
-                                               Lj.outerStride(), &info);
-        if (info != 0)
-            throw std::runtime_error(std::format(
-                "Cholesky failed at stage {} with status {}", j, info));
+        guanaqo::blas::xpotrf_L(as_view(Lj, use_index_t));
     }
 }
 
