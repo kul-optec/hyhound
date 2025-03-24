@@ -22,6 +22,7 @@ class HyhoundRecipe(ConanFile):
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
     bool_hyhound_options = {
+        "with_ocp": False,
         "with_benchmarks": False,
     }
     options = {

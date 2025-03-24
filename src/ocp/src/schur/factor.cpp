@@ -1,4 +1,4 @@
-#include "ocp/schur.hpp"
+#include <hyhound/ocp/schur.hpp>
 
 #include <guanaqo/blas/hl-blas-interface.hpp>
 

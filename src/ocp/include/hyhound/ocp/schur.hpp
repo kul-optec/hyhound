@@ -1,10 +1,10 @@
 #pragma once
 
-#include "riccati.hpp"
+#include <hyhound/ocp/riccati.hpp>
 
 namespace hyhound::ocp {
 
-struct OCPDataSchur {
+struct HYHOUND_OCP_EXPORT OCPDataSchur {
     index_t N  = 31;
     index_t nx = 40, nu = 10, ny = 10;
     mat ABs  = mat::Zero(nx, (nx + nu) * N);
@@ -60,7 +60,7 @@ struct OCPDataSchur {
     }
 };
 
-struct SchurFactor {
+struct HYHOUND_OCP_EXPORT SchurFactor {
     const OCPDataSchur &ocp;
     mat LHs  = mat::Zero(ocp.nx + ocp.nu, (ocp.nx + ocp.nu) * (ocp.N + 1));
     mat LΨds = mat::Zero(ocp.nx, ocp.nx *(ocp.N + 1));
@@ -88,8 +88,8 @@ struct SchurFactor {
     auto u(index_t j) { return v.col(j).bottomRows(ocp.nu); }
 };
 
-void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ);
-void update(SchurFactor &factor, Eigen::Ref<const mat> ΔΣ);
-void solve(SchurFactor &factor);
+HYHOUND_OCP_EXPORT void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ);
+HYHOUND_OCP_EXPORT void update(SchurFactor &factor, Eigen::Ref<const mat> ΔΣ);
+HYHOUND_OCP_EXPORT void solve(SchurFactor &factor);
 
 } // namespace hyhound::ocp

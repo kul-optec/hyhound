@@ -12,8 +12,9 @@ target_sources(config INTERFACE FILE_SET headers TYPE HEADERS
 )
 target_compile_definitions(config INTERFACE
     $<$<BOOL:${HYHOUND_VERIFY_ASSUMPTIONS}>:HYHOUND_VERIFY_ASSUMPTIONS>
+    $<$<BOOL:${HYHOUND_WITH_OCP}>:HYHOUND_WITH_OCP>
 )
-hyhound_configure_interface_library(config EXPORT_PREFIX hyhound)
+hyhound_configure_interface_library(config)
 
 # Utility functions
 # ------------------------------------------------------------------------------
@@ -47,10 +48,34 @@ target_sources(hyhound PUBLIC FILE_SET headers TYPE HEADERS
           "hyhound/include/hyhound/householder-updowndate-micro-kernels.tpp"
 )
 target_link_libraries(hyhound PUBLIC hyhound::config hyhound::util)
+target_link_libraries(hyhound PRIVATE hyhound::warnings)
 hyhound_configure_library(hyhound)
 
 include("hyhound/src/micro-kernels/Codegen.cmake")
 codegen_hyhound_microkernels(hyhound)
+
+# Library for solving OCPs using Riccati recursion or Schur complement method
+# ------------------------------------------------------------------------------
+if (HYHOUND_WITH_OCP)
+    find_package(guanaqo REQUIRED COMPONENTS BLAS)
+    find_package(Eigen3 REQUIRED)
+    add_library(ocp
+        "ocp/src/riccati/factor.cpp"
+        "ocp/src/riccati/solve.cpp"
+        "ocp/src/riccati/update.cpp"
+        "ocp/src/schur/factor.cpp"
+        "ocp/src/schur/solve.cpp"
+        "ocp/src/schur/update.cpp"
+    )
+    target_sources(ocp PUBLIC FILE_SET headers TYPE HEADERS
+        BASE_DIRS "ocp/include"
+        FILES "ocp/include/hyhound/ocp/riccati.hpp"
+              "ocp/include/hyhound/ocp/schur.hpp"
+    )
+    target_link_libraries(ocp PUBLIC hyhound::hyhound PRIVATE hyhound::warnings)
+    target_link_libraries(ocp PUBLIC Eigen3::Eigen guanaqo::blas)
+    hyhound_configure_library(ocp EXPORT_PREFIX hyhound)
+endif()
 
 
 # ==============================================================================

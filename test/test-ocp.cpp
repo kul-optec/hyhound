@@ -1,5 +1,5 @@
-#include "ocp/riccati.hpp"
-#include "ocp/schur.hpp"
+#include <hyhound/ocp/riccati.hpp>
+#include <hyhound/ocp/schur.hpp>
 
 #include <gtest/gtest.h>
 

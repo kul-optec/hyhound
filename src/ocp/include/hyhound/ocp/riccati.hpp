@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hyhound/config.hpp>
+#include <hyhound/ocp/export.h>
 #include <Eigen/Core>
 
 #include <algorithm>
@@ -18,7 +19,7 @@ auto vw(T &&t) {
     return as_view(std::forward<T>(t), guanaqo::with_index_type<index_t>);
 }
 
-struct OCPDataRiccati {
+struct HYHOUND_OCP_EXPORT OCPDataRiccati {
     index_t N  = 31;
     index_t nx = 40, nu = 10, ny = 10;
     mat BAs  = mat::Zero(nx, (nu + nx) * N);
@@ -81,7 +82,7 @@ struct OCPDataRiccati {
     }
 };
 
-struct RiccatiFactor {
+struct HYHOUND_OCP_EXPORT RiccatiFactor {
     const OCPDataRiccati &ocp;
     mat Ls = mat::Zero(ocp.nu + ocp.nx, (ocp.nu + ocp.nx) * (ocp.N + 1));
     mat Vᵀ = mat::Zero(ocp.nx, ocp.nu + ocp.nx);
@@ -102,8 +103,8 @@ struct RiccatiFactor {
     auto x(index_t j) { return ux.col(j).bottomRows(ocp.nx); }
 };
 
-void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ);
-void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ);
-void solve(RiccatiFactor &factor);
+HYHOUND_OCP_EXPORT void factor(RiccatiFactor &factor, Eigen::Ref<const mat> Σ);
+HYHOUND_OCP_EXPORT void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ);
+HYHOUND_OCP_EXPORT void solve(RiccatiFactor &factor);
 
 } // namespace hyhound::ocp

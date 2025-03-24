@@ -31,6 +31,7 @@ jobs:
         -c tools.build:skip_test=False
         -o guanaqo/\*:with_openmp=True
         -o guanaqo/\*:with_mkl=False
+        -o \&:with_ocp=True
         -o \&:with_benchmarks=True
 
     - run: conan cache clean

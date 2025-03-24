@@ -3,7 +3,8 @@
 #include <hyhound-version.h>
 #include <utility>
 
-#include "ocp/schur.hpp"
+#include <hyhound/ocp/riccati.hpp>
+#include <hyhound/ocp/schur.hpp>
 
 using namespace hyhound;
 using namespace hyhound::ocp;

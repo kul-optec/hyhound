@@ -1,4 +1,4 @@
-#include "ocp/riccati.hpp"
+#include <hyhound/ocp/riccati.hpp>
 
 #include <hyhound/householder-updowndate.hpp>
 #include <hyhound/updown.hpp>

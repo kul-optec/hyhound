@@ -23,6 +23,8 @@ set(HYHOUND_MAX_HYH_KERNEL_HEIGHT "32" CACHE STRING
 # Enable/disable optional components
 option(HYHOUND_WITH_TESTS
     "Build the tests" ${BUILD_TESTING})
+option(HYHOUND_WITH_OCP
+    "Build the OCP solvers" Off)
 option(HYHOUND_WITH_BENCHMARKS
     "Build the benchmarks" Off)
 # Developer options

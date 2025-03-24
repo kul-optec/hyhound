@@ -73,12 +73,33 @@ if (HYHOUND_CORE_TARGETS)
             COMPONENT dev)
     hyhound_install_config(Core dev)
     list(JOIN HYHOUND_CORE_TARGETS ", " TGTS)
-    string(APPEND HYHOUND_INSTALLED_TARGETS_MSG " * Core:    ${TGTS}\n")
+    string(APPEND HYHOUND_INSTALLED_TARGETS_MSG " * Core:  ${TGTS}\n")
     list(APPEND HYHOUND_INSTALL_TARGETS ${HYHOUND_CORE_TARGETS})
 endif()
 
+# Install the hyhound OCP libraries
+set(HYHOUND_OCP_TARGETS)
+hyhound_add_if_target_exists(HYHOUND_OCP_TARGETS ocp)
+if (HYHOUND_OCP_TARGETS)
+    install(TARGETS ${HYHOUND_OCP_TARGETS}
+        EXPORT hyhoundOCPTargets
+        RUNTIME DESTINATION "${HYHOUND_INSTALL_BINDIR}"
+            COMPONENT lib
+        LIBRARY DESTINATION "${HYHOUND_INSTALL_LIBDIR}"
+            COMPONENT lib
+            NAMELINK_COMPONENT dev
+        ARCHIVE DESTINATION "${HYHOUND_INSTALL_LIBDIR}"
+            COMPONENT dev
+        FILE_SET headers DESTINATION "${HYHOUND_INSTALL_INCLUDEDIR}"
+            COMPONENT dev)
+    hyhound_install_config(OCP dev)
+    list(JOIN HYHOUND_OCP_TARGETS ", " TGTS)
+    string(APPEND HYHOUND_INSTALLED_TARGETS_MSG " * OCP:   ${TGTS}\n")
+    list(APPEND HYHOUND_INSTALL_TARGETS ${HYHOUND_OCP_TARGETS})
+endif()
+
 # Install the debug files
-foreach(target IN LISTS HYHOUND_CORE_TARGETS)
+foreach(target IN LISTS HYHOUND_CORE_TARGETS HYHOUND_OCP_TARGETS)
     get_target_property(target_type ${target} TYPE)
     if (${target_type} STREQUAL "SHARED_LIBRARY")
         hyhound_install_debug_syms(${target} debug
@@ -93,7 +114,7 @@ endforeach()
 
 # Make stand-alone
 if (HYHOUND_STANDALONE)
-    foreach(target IN LISTS HYHOUND_CORE_TARGETS)
+    foreach(target IN LISTS HYHOUND_CORE_TARGETS HYHOUND_OCP_TARGETS)
         set_target_properties(${TGT} PROPERTIES
             INSTALL_RPATH "$ORIGIN;$ORIGIN/${HYHOUND_INSTALL_LIBRELBINDIR}")
     endforeach()

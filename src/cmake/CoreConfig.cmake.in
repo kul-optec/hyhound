@@ -2,7 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
-find_dependency(guanaqo COMPONENTS BLAS)
+find_dependency(guanaqo)
 
 include("${CMAKE_CURRENT_LIST_DIR}/hyhoundCoreTargets.cmake")
 

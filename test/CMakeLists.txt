@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
 project(hyhound-test CXX)
-enable_testing()
 include(GoogleTest)
 
 # Dependencies
@@ -8,7 +7,7 @@ find_package(GTest REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(guanaqo REQUIRED COMPONENTS BLAS)
 if (NOT TARGET hyhound::hyhound)
-    find_package(hyhound REQUIRED)
+    find_package(hyhound REQUIRED OPTIONAL_COMPONENTS OCP)
 endif()
 
 add_executable(tests
@@ -19,6 +18,11 @@ target_link_libraries(tests PRIVATE
     guanaqo::blas hyhound::hyhound hyhound::warnings
     GTest::gtest_main GTest::gmock
     Eigen3::Eigen)
+
+if (TARGET hyhound::ocp)
+    target_sources(tests PRIVATE "test-ocp.cpp")
+    target_link_libraries(tests PRIVATE hyhound::ocp)
+endif()
 
 if (NOT CMAKE_CROSSCOMPILING OR HYHOUND_FORCE_TEST_DISCOVERY)
     gtest_discover_tests(tests DISCOVERY_TIMEOUT 60)

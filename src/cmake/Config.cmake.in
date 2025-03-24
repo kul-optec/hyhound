@@ -2,7 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
-set(HYHOUND_AVAILABLE_COMPONENTS "Core")
+set(HYHOUND_AVAILABLE_COMPONENTS "Core" "OCP")
 # Always require "Core"
 list(PREPEND hyhound_FIND_COMPONENTS "Core")
 if (hyhound_FIND_REQUIRED)
@@ -38,7 +38,7 @@ endforeach()
 
 if (hyhound_Core_FOUND AND NOT _@PROJECT_NAME@_PRINTED AND "Core" IN_LIST hyhound_FIND_COMPONENTS)
     get_target_property(HYHOUND_CONFIGS hyhound::hyhound IMPORTED_CONFIGURATIONS)
-    message(STATUS "Found @PROJECT_NAME@ @PROJECT_VERSION@: ${CMAKE_CURRENT_LIST_DIR} (available configs: ${HYHOUND_CONFIGS}, installed components: @HYHOUND_OPTIONAL_COMPONENTS@, installed targets: @HYHOUND_INSTALL_TARGETS@)")
+    message(STATUS "Found @PROJECT_NAME@ @PROJECT_VERSION@: ${CMAKE_CURRENT_LIST_DIR} (available configs: ${HYHOUND_CONFIGS}, valid components: @HYHOUND_OPTIONAL_COMPONENTS@, installed targets: @HYHOUND_INSTALL_TARGETS@)")
     set(_@PROJECT_NAME@_PRINTED On CACHE INTERNAL "")
 endif()
 

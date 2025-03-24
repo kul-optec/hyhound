@@ -40,6 +40,7 @@ conan install . --build=missing -pr profiles/desktop \
     -c tools.build:skip_test=True \
     -o guanaqo/\*:with_openmp=True \
     -o guanaqo/\*:with_mkl=True \
+    -o \&:with_ocp=True \
     -o \&:with_benchmarks=True
 ```
 Configure and build the hyhound library and benchmarks:
