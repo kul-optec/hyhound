@@ -6,10 +6,17 @@
 #include <algorithm>
 #include <random>
 
+#include <guanaqo/eigen/view.hpp>
+
 namespace hyhound::ocp {
 
 using mat = Eigen::MatrixX<real_t>;
 using vec = Eigen::VectorX<real_t>;
+
+template <class T>
+auto vw(T &&t) {
+    return as_view(std::forward<T>(t), guanaqo::with_index_type<index_t>);
+}
 
 struct OCPDataRiccati {
     index_t N  = 31;

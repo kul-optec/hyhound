@@ -57,7 +57,7 @@ class HyhoundRecipe(ConanFile):
     generators = ("CMakeDeps",)
 
     def requirements(self):
-        self.requires("guanaqo/1.0.0-alpha.11", transitive_headers=True)
+        self.requires("guanaqo/1.0.0-alpha.12", transitive_headers=True)
         if self.options.with_benchmarks:
             self.requires("benchmark/1.8.4")
             self.requires("gtest/1.15.0")

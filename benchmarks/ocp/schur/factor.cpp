@@ -1,13 +1,11 @@
 #include "ocp/schur.hpp"
 
 #include <guanaqo/blas/hl-blas-interface.hpp>
-#include <guanaqo/eigen/view.hpp>
 
 namespace hyhound::ocp {
 
-constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
-
 void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ) {
+    using namespace guanaqo::blas;
     const auto &ocp = factor.ocp;
     auto CN         = ocp.C(ocp.N);
     auto ΣCN        = factor.ΣG.rightCols(ocp.nx);
@@ -16,17 +14,15 @@ void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ) {
     ΣCN = Σ.col(ocp.N).asDiagonal() * CN;
     LxxN.triangularView<Eigen::Lower>() =
         ocp.Q(ocp.N).triangularView<Eigen::Lower>();
-    guanaqo::blas::xgemmt_LTN(real_t{1}, as_view(CN, use_index_t),
-                              as_view(ΣCN, use_index_t), real_t{1},
-                              as_view(LxxN, use_index_t));
+    xgemmt_LTN(real_t{1}, vw(CN), vw(ΣCN), real_t{1}, vw(LxxN));
     // Lxx(N) = chol(H(N))
-    guanaqo::blas::xpotrf_L(as_view(LxxN, use_index_t));
+    xpotrf_L(vw(LxxN));
     auto WxN                           = factor.Wᵀ(ocp.N).topRows(ocp.nx);
     WxN.triangularView<Eigen::Lower>() = LxxN.triangularView<Eigen::Lower>();
-    guanaqo::blas::xtrtri_LN(as_view(WxN, use_index_t));
+    xtrtri_LN(vw(WxN));
     auto LΨdN                           = factor.LΨd(ocp.N);
     LΨdN.triangularView<Eigen::Lower>() = WxN.triangularView<Eigen::Lower>();
-    guanaqo::blas::xlauum_L(as_view(LΨdN, use_index_t));
+    xlauum_L(vw(LΨdN));
 
     for (index_t j = ocp.N; j-- > 0;) {
         auto Gj       = ocp.G(j);
@@ -39,45 +35,37 @@ void factor(SchurFactor &factor, Eigen::Ref<const mat> Σ) {
         ΣGj = Σ.col(j).asDiagonal() * Gj;
         Lj.triangularView<Eigen::Lower>() =
             ocp.H(j).triangularView<Eigen::Lower>();
-        guanaqo::blas::xgemmt_LTN(real_t{1}, as_view(Gj, use_index_t),
-                                  as_view(ΣGj, use_index_t), real_t{1},
-                                  as_view(Lj, use_index_t));
-        guanaqo::blas::xpotrf_L(as_view(Lj, use_index_t));
+        xgemmt_LTN(real_t{1}, vw(Gj), vw(ΣGj), real_t{1}, vw(Lj));
+        xpotrf_L(vw(Lj));
         // V = F L⁻ᵀ
         auto Vj = factor.V(j);
         Vj      = ocp.F(j);
-        guanaqo::blas::xtrsm_RLTN(real_t{1}, as_view(Lj, use_index_t),
-                                  as_view(Vj, use_index_t));
+        xtrsm_RLTN(real_t{1}, vw(Lj), vw(Vj));
         // VVᵀ
-        guanaqo::blas::xsyrk_LN(real_t{1}, as_view(Vj, use_index_t), //
-                                real_t{1}, as_view(LΨd_next, use_index_t));
+        xsyrk_LN(real_t{1}, vw(Vj), //
+                 real_t{1}, vw(LΨd_next));
         // chol(Θ + VVᵀ)
-        guanaqo::blas::xpotrf_L(as_view(LΨd_next, use_index_t));
+        xpotrf_L(vw(LΨd_next));
         // W = (I 0) L⁻ᵀ
         auto Wᵀj  = factor.Wᵀ(j);
         Wᵀj       = Lj.topLeftCorner(ocp.nx + ocp.nu, ocp.nx);
         auto Wᵀxj = Wᵀj.topRows(ocp.nx), Wᵀuj = Wᵀj.bottomRows(ocp.nu);
-        guanaqo::blas::xtrtri_LN(as_view(Wᵀxj, use_index_t));
-        guanaqo::blas::xtrmm_RLNN(real_t{-1}, as_view(Wᵀxj, use_index_t),
-                                  as_view(Wᵀuj, use_index_t));
+        xtrtri_LN(vw(Wᵀxj));
+        xtrmm_RLNN(real_t{-1}, vw(Wᵀxj), vw(Wᵀuj));
         auto Luuj = Lj.bottomRightCorner(ocp.nu, ocp.nu);
-        guanaqo::blas::xtrsm_LLNN(real_t{1}, as_view(Luuj, use_index_t),
-                                  as_view(Wᵀuj, use_index_t));
+        xtrsm_LLNN(real_t{1}, vw(Luuj), vw(Wᵀuj));
         // -WVᵀ
-        guanaqo::blas::xgemm_TT(real_t{-1}, as_view(Wᵀj, use_index_t),
-                                as_view(Vj, use_index_t), real_t{0},
-                                as_view(LΨsj, use_index_t));
-        guanaqo::blas::xtrsm_RLTN(real_t{1}, as_view(LΨd_next, use_index_t),
-                                  as_view(LΨsj, use_index_t));
+        xgemm_TT(real_t{-1}, vw(Wᵀj), vw(Vj), real_t{0}, vw(LΨsj));
+        xtrsm_RLTN(real_t{1}, vw(LΨd_next), vw(LΨsj));
         // WWᵀ
-        guanaqo::blas::xsyrk_LT(real_t{1}, as_view(Wᵀj, use_index_t), //
-                                real_t{0}, as_view(LΨdj, use_index_t));
+        xsyrk_LT(real_t{1}, vw(Wᵀj), //
+                 real_t{0}, vw(LΨdj));
         // -LΨs LΨsᵀ
-        guanaqo::blas::xsyrk_LN(real_t{-1}, as_view(LΨsj, use_index_t), //
-                                real_t{1}, as_view(LΨdj, use_index_t));
+        xsyrk_LN(real_t{-1}, vw(LΨsj), //
+                 real_t{1}, vw(LΨdj));
     }
     // chol(Θ)
-    guanaqo::blas::xpotrf_L(as_view(factor.LΨd(0), use_index_t));
+    xpotrf_L(vw(factor.LΨd(0)));
 }
 
 } // namespace hyhound::ocp

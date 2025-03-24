@@ -4,13 +4,11 @@
 #include <hyhound/updown.hpp>
 #include <guanaqo/blas/hl-blas-interface.hpp>
 #include <guanaqo/eigen/span.hpp>
-#include <guanaqo/eigen/view.hpp>
 
 namespace hyhound::ocp {
 
-constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
-
 void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
+    using namespace guanaqo::blas;
     using std::abs;
     using std::copysign;
     using std::sqrt;
@@ -34,13 +32,10 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
             auto YNJ = YN->leftCols(nJ).bottomRows(ocp.nx);
             auto ΦNJ = ΦN->leftCols(nJ);
             auto SNJ = factor.S.leftCols(nJ);
-            guanaqo::blas::xgemm_TN(real_t{1},
-                                    as_view(ocp.F(ocp.N - 1), use_index_t),
-                                    as_view(YNJ, use_index_t), real_t{0},
-                                    as_view(ΦNJ, use_index_t));
+            xgemm_TN(real_t{1}, vw(ocp.F(ocp.N - 1)), vw(YNJ), real_t{0},
+                     vw(ΦNJ));
             update_cholesky(
-                guanaqo::as_view(LxxN, use_index_t),
-                guanaqo::as_view(YNJ, use_index_t),
+                vw(LxxN), vw(YNJ),
                 hyhound::UpDowndate{guanaqo::as_span(SNJ.reshaped())});
         }
     }
@@ -64,16 +59,11 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
         auto Lj     = factor.L(j);
         auto Luuxuj = Lj.leftCols(ocp.nu);
         auto Lxxj   = Lj.bottomRightCorner(ocp.nx, ocp.nx);
-        update_cholesky(guanaqo::as_view(Luuxuj, use_index_t),
-                        guanaqo::as_view(YjJ, use_index_t),
+        update_cholesky(vw(Luuxuj), vw(YjJ),
                         hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
         if (j > 0)
-            guanaqo::blas::xgemm_TN(real_t{1},
-                                    as_view(ocp.F(j - 1), use_index_t),
-                                    as_view(YjJx, use_index_t), real_t{0},
-                                    as_view(ΦjJ, use_index_t));
-        update_cholesky(guanaqo::as_view(Lxxj, use_index_t),
-                        guanaqo::as_view(YjJx, use_index_t),
+            xgemm_TN(real_t{1}, vw(ocp.F(j - 1)), vw(YjJx), real_t{0}, vw(ΦjJ));
+        update_cholesky(vw(Lxxj), vw(YjJx),
                         hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
     }
 }

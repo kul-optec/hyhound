@@ -1,16 +1,14 @@
 #include "ocp/schur.hpp"
 
 #include <guanaqo/blas/hl-blas-interface.hpp>
-#include <guanaqo/eigen/view.hpp>
 
 namespace hyhound::ocp {
-
-constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
 
 static void update_schur_rank_one(SchurFactor &factor,
                                   index_t j /* stage index */,
                                   index_t i /* constraint index */,
                                   real_t Σji /* penalty factor change */) {
+    using namespace guanaqo::blas;
     const auto &ocp = factor.ocp;
     using std::abs;
     using std::copysign;
@@ -25,16 +23,15 @@ static void update_schur_rank_one(SchurFactor &factor,
         e̅ = ocp.G(j).row(i).transpose() * sqrt(abs(Σji));
     ẽ = e̅;
     // e̅ = H ẽ
-    guanaqo::blas::xtrsv_LNN(as_view(Hj, use_index_t), as_view(ẽ, use_index_t));
-    guanaqo::blas::xtrsv_LTN(as_view(Hj, use_index_t), as_view(ẽ, use_index_t));
+    xtrsv_LNN(vw(Hj), vw(ẽ));
+    xtrsv_LTN(vw(Hj), vw(ẽ));
     ẽ *= (1 / sqrt(1 + copysign(ẽ.dot(e̅), Σji)));
     if (j == ocp.N) {
         factor.ψ.topRows(ocp.nx) = -ẽ.topRows(ocp.nx);
         factor.ψ.bottomRows(ocp.nx).setZero();
     } else {
-        guanaqo::blas::xgemv_N(real_t{1}, as_view(ocp.F(j), use_index_t),
-                               as_view(ẽ, use_index_t), real_t{0},
-                               as_view(factor.ψ.topRows(ocp.nx), use_index_t));
+        xgemv_N(real_t{1}, vw(ocp.F(j)), vw(ẽ), real_t{0},
+                vw(factor.ψ.topRows(ocp.nx)));
         factor.ψ.bottomRows(ocp.nx) = -ẽ.topRows(ocp.nx);
     }
     real_t α                    = -copysign(real_t{1}, Σji);
