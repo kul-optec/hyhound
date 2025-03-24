@@ -46,20 +46,18 @@ struct mat_access_impl {
     {
         x.copy_to(&operator()(r, c), align);
     }
-    template <class Self>
-    [[gnu::always_inline]] constexpr Self block(this const Self &self,
-                                                index_t r, index_t c) noexcept {
-        return {&self(r, c), self.outer_stride};
+
+    [[gnu::always_inline]] constexpr mat_access_impl
+    block(index_t r, index_t c) const noexcept {
+        return {&(*this)(r, c), outer_stride};
     }
-    template <class Self>
-    [[gnu::always_inline]] constexpr Self middle_rows(this const Self &self,
-                                                      index_t r) noexcept {
-        return {&self(r, 0), self.outer_stride};
+    [[gnu::always_inline]] constexpr mat_access_impl
+    middle_rows(index_t r) const noexcept {
+        return {&(*this)(r, 0), outer_stride};
     }
-    template <class Self>
-    [[gnu::always_inline]] constexpr Self middle_cols(this const Self &self,
-                                                      index_t c) noexcept {
-        return {&self(0, c), self.outer_stride};
+    [[gnu::always_inline]] constexpr mat_access_impl
+    middle_cols(index_t c) const noexcept {
+        return {&(*this)(0, c), outer_stride};
     }
 
     [[gnu::always_inline]] constexpr mat_access_impl(
@@ -82,12 +80,7 @@ struct mat_access_impl {
         default;
 };
 
-struct matrix_accessor : mat_access_impl<const real_t> {
-    using mat_access_impl<const real_t>::mat_access_impl;
-};
-
-struct mut_matrix_accessor : mat_access_impl<real_t> {
-    using mat_access_impl<real_t>::mat_access_impl;
-};
+using matrix_accessor     = mat_access_impl<const real_t>;
+using mut_matrix_accessor = mat_access_impl<real_t>;
 
 } // namespace hyhound::micro_kernels

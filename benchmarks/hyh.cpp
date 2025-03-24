@@ -4,13 +4,13 @@
 
 #include <guanaqo/eigen/view.hpp>
 #include <guanaqo/preprocessor.h>
+#include <guanaqo/print.hpp>
 
 #include <Eigen/Dense>
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
 #include <cstdlib>
-#include <format>
 #include <map>
 #include <mutex>
 #include <random>
@@ -112,9 +112,10 @@ struct CholeskyFixture : benchmark::Fixture {
 #endif
         E.triangularView<Eigen::StrictlyUpper>().setZero();
         real_t r          = E.lpNorm<Eigen::Infinity>();
-        const char *color = r < 1e-9 ? "" : "\x1b[0;31m";
-        const char *reset = r < 1e-9 ? "" : "\x1b[0m";
-        state.SetLabel(std::format("{}resid={:7e}{}", color, r, reset));
+        std::string label = "resid=" + guanaqo::float_to_str(r, 6);
+        if (!(r < 1e-9))
+            label = "\x1b[0;31m" + label + "\x1b[0m";
+        state.SetLabel(label);
         compute_flops(state);
     }
 
