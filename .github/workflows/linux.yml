@@ -24,7 +24,7 @@ jobs:
       run: >
         conan create . --build=missing -pr profiles/${{ matrix.profile }}
         -s build_type=Release
-        -c tools.build:skip_test=True
+        -c tools.build:skip_test=False
         -o guanaqo/\*:with_openmp=True
         -o guanaqo/\*:with_mkl=False
         -o \&:with_benchmarks=True
