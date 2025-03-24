@@ -32,7 +32,7 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
     simdA V[S / NA][R]{};
     UNROLL_FOR_A_COLS (index_t j = colsA0; j < colsA; ++j) {
         if (Conf.prefetch_dist_col_a > 0)
-            _mm_prefetch(&A(0, j + Conf.prefetch_dist_col_a), _MM_HINT_T0);
+            __builtin_prefetch(&A(0, j + Conf.prefetch_dist_col_a), 0, 3);
         UNROLL_FOR (index_t kk = 0; kk < R; kk += NL) {
             auto Akj = signs(B.load<simdL>(kk, j), j);
             UNROLL_FOR (index_t k = 0; k < NL; ++k)
@@ -75,7 +75,7 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
     // Update A -= V Bᵀ
     UNROLL_FOR_A_COLS (index_t j = colsA0; j < colsA; ++j) {
         if (Conf.prefetch_dist_col_a > 0)
-            _mm_prefetch(&A(0, j + Conf.prefetch_dist_col_a), _MM_HINT_T0);
+            __builtin_prefetch(&A(0, j + Conf.prefetch_dist_col_a), 0, 3);
         simdL Akj[R / NL];
         UNROLL_FOR (index_t kk = 0; kk < R; kk += NL)
             Akj[kk / NL] = B.load<simdL>(kk, j);

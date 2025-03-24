@@ -97,7 +97,7 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                 for (index_t cc = 0; cc < R * N; cc += R) {
                     auto Ls = L_.block(i, k + cc);
                     for (index_t c = 0; c < R; ++c)
-                        _mm_prefetch(&Ls(0, c), _MM_HINT_NTA);
+                        __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
                     updowndate_tail<uConf, UpDown>(0, A.cols, W[cc / R], Ls,
                                                    Adk[cc / R], As, signs);
                 }
@@ -108,7 +108,7 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                 for (index_t cc = 0; cc < R * N; cc += R) {
                     auto Ls = L_.block(i, k + cc);
                     for (index_t c = 0; c < R; ++c)
-                        _mm_prefetch(&Ls(0, c), _MM_HINT_NTA);
+                        __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
                     updowndate_tile_tail<uConf, UpDown>(rem_i, 0, A.cols,
                                                         W[cc / R], Ls,
                                                         Adk[cc / R], As, signs);
@@ -135,7 +135,7 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                     // Process columns
                     auto Ls = L_.block(i, k);
                     for (index_t c = 0; c < R; ++c)
-                        _mm_prefetch(&Ls(0, c), _MM_HINT_NTA);
+                        __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
                     tail_microkernel_lut[rem_k - 1](rem_i, 0, A.cols, W[0], Ls,
                                                     Ad, As, signs);
                 },
