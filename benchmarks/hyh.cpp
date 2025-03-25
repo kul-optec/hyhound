@@ -2,6 +2,7 @@
 #include <guanaqo/blas/blas-interface.hpp>
 #include <hyhound-version.h>
 
+#include <guanaqo/demangled-typename.hpp>
 #include <guanaqo/eigen/view.hpp>
 #include <guanaqo/preprocessor.h>
 #include <guanaqo/print.hpp>
@@ -238,6 +239,8 @@ int main(int argc, char **argv) {
 #endif
     benchmark::AddCustomContext("hyhound_build_time", hyhound_build_time);
     benchmark::AddCustomContext("hyhound_commit_hash", hyhound_commit_hash);
+    benchmark::AddCustomContext("real_type",
+                                guanaqo::demangled_typename(typeid(real_t)));
 #if defined(__AVX512F__)
     benchmark::AddCustomContext("arch", "avx512f");
 #elif defined(__AVX2__)
@@ -255,21 +258,28 @@ using namespace hyhound;
 // clang-format off
 BM_BLK_REGISTER_F(CholeskyFixture, full_factorize)->Name("full_factorize");
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 1, 32);
+#if !__AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 4);
+#endif
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 8);
+#if !__AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 12);
+#endif
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 16);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 24);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 32);
 
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 8);
+#if !__AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 12);
+#endif
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 16);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 24);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 32);
 #if __AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 8);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 16);
+BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 32);
 #endif
 // clang-format on
 
