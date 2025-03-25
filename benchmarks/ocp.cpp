@@ -38,6 +38,7 @@ void bm_solve_riccati(benchmark::State &state) {
 }
 
 void bm_update_riccati(benchmark::State &state) {
+    using std::exp2;
     std::mt19937 rng{54321};
     std::normal_distribution<real_t> nrml{0, 10};
     std::bernoulli_distribution bern{0.25};
@@ -74,6 +75,7 @@ void bm_solve_schur(benchmark::State &state) {
 }
 
 void bm_update_schur(benchmark::State &state) {
+    using std::exp2;
     std::mt19937 rng{54321};
     std::normal_distribution<real_t> nrml{0, 10};
     std::bernoulli_distribution bern{0.25};

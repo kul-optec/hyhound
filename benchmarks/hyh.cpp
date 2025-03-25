@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <random>
@@ -28,7 +29,7 @@ using std::pow;
 #endif
 
 struct ProblemMatrices {
-    Eigen::MatrixXd K̃, K, L, A;
+    Eigen::MatrixX<real_t> K̃, K, L, A;
 };
 using cache_t = std::map<std::pair<index_t, index_t>, ProblemMatrices>;
 std::mutex cache_mtx;
@@ -36,7 +37,7 @@ cache_t cache;
 
 struct CholeskyFixture : benchmark::Fixture {
     index_t m, n;
-    Eigen::MatrixXd L̃;
+    Eigen::MatrixX<real_t> L̃;
     cache_t::const_iterator matrices;
 
     static cache_t::const_iterator generate_problem(index_t m, index_t n) {
@@ -53,7 +54,7 @@ struct CholeskyFixture : benchmark::Fixture {
 #endif
 
         std::mt19937 rng{12345};
-        std::uniform_real_distribution<> dist(0.0, 1.0);
+        std::uniform_real_distribution<real_t> dist(-1, 1);
         mat.K̃.resize(n, n), mat.K.resize(n, n), mat.L.resize(n, n);
         mat.A.resize(n, m);
         std::ranges::generate(mat.K.reshaped(), [&] { return dist(rng); });
@@ -96,10 +97,11 @@ struct CholeskyFixture : benchmark::Fixture {
     }
 
     void TearDown(benchmark::State &state) final {
-        Eigen::MatrixXd E = matrices->second.K̃;
-        const auto n      = static_cast<index_t>(L̃.rows()),
-                   ldL̃    = static_cast<index_t>(L̃.outerStride()),
-                   ldE    = static_cast<index_t>(E.outerStride());
+        using std::pow;
+        Eigen::MatrixX<real_t> E = matrices->second.K̃;
+        const auto n             = static_cast<index_t>(L̃.rows()),
+                   ldL̃           = static_cast<index_t>(L̃.outerStride()),
+                   ldE           = static_cast<index_t>(E.outerStride());
 #if GUANAQO_WITH_OPENMP
         int old_num_threads = omp_get_max_threads();
         omp_set_num_threads(std::thread::hardware_concurrency() / 2);
@@ -113,7 +115,8 @@ struct CholeskyFixture : benchmark::Fixture {
         E.triangularView<Eigen::StrictlyUpper>().setZero();
         real_t r          = E.lpNorm<Eigen::Infinity>();
         std::string label = "resid=" + guanaqo::float_to_str(r, 6);
-        if (!(r < 1e-9))
+        const auto ε = pow(std::numeric_limits<real_t>::epsilon(), real_t(0.5));
+        if (!(r < ε))
             label = "\x1b[0;31m" + label + "\x1b[0m";
         state.SetLabel(label);
         compute_flops(state);
@@ -129,7 +132,7 @@ struct CholeskyFixture : benchmark::Fixture {
 
     template <auto Func>
     void runUpdateBenchmark(benchmark::State &state) {
-        Eigen::MatrixXd Ã(m, n);
+        Eigen::MatrixX<real_t> Ã(m, n);
         for (auto _ : state) {
             state.PauseTiming();
             Ã = matrices->second.A;
@@ -191,7 +194,7 @@ std::vector<::benchmark::internal::Benchmark *> benchmarks;
     BENCHMARK_TEMPLATE_DEFINE_F(                                               \
         BlockedFixture, BM_BLK_IMPL_NAME(name, __VA_ARGS__), __VA_ARGS__)      \
     (benchmark::State & state) {                                               \
-        this->runUpdateBenchmark<func<{__VA_ARGS__}, updown>>(state);          \
+        this->runUpdateBenchmark<func<real_t, {__VA_ARGS__}, updown>>(state);  \
     }                                                                          \
     BM_BLK_REGISTER_F(BlockedFixture, BM_BLK_IMPL_NAME(name, __VA_ARGS__))     \
         ->Name(BM_BLK_NAME(name, __VA_ARGS__))
@@ -256,24 +259,17 @@ BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 4);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 8);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 12);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 16);
-#if __AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 24);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 32);
-#endif
-BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 12, 2);
-BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 4, 12, 4);
 
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 8);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 12);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 16);
-#if __AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 24);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 32);
+#if __AVX512F__
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 8);
-BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 12);
 BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 16, 16);
-BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 24, 2);
-BENCHMARK_BLOCKED(hyh_update, update_cholesky, Downdate, 8, 24, 4);
 #endif
 // clang-format on
 

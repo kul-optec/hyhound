@@ -9,8 +9,8 @@ include(CTest)
 
 # Options
 include(CMakeDependentOption)
-set(HYHOUND_DENSE_REAL_TYPE "double" CACHE STRING
-    "The main floating point type for representing real numbers")
+set(HYHOUND_DENSE_REAL_TYPE "double" "float" CACHE STRING
+    "The floating point types that the functions are instantiated for")
 set(HYHOUND_DENSE_INDEX_TYPE "long long" CACHE STRING
     "The main integer type for indices and sizes")
 # Target options

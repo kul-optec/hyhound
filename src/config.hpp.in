@@ -10,7 +10,7 @@ namespace hyhound {
 #ifdef __clangd__
 using real_t = double; // clangd does not support std::float128_t etc.
 #else
-using real_t = @HYHOUND_DENSE_REAL_TYPE@;
+using real_t = @HYHOUND_DENSE_REAL_TYPE_0@;
 #endif
 using index_t = @HYHOUND_DENSE_INDEX_TYPE@;
 

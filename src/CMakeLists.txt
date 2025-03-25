@@ -4,6 +4,7 @@ find_package(guanaqo REQUIRED)
 # Configuration options
 # ------------------------------------------------------------------------------
 add_library(config INTERFACE)
+list(GET HYHOUND_DENSE_REAL_TYPE 0 HYHOUND_DENSE_REAL_TYPE_0)
 configure_file("config.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/config/include/hyhound/config.hpp" @ONLY)
 target_sources(config INTERFACE FILE_SET headers TYPE HEADERS
@@ -25,7 +26,6 @@ target_sources(util INTERFACE FILE_SET headers TYPE HEADERS
           "util/include/hyhound/cneg.hpp"
           "util/include/hyhound/loop.hpp"
           "util/include/hyhound/lut.hpp"
-          "util/include/hyhound/matrix-view.hpp"
           "util/include/hyhound/unroll.h"
 )
 target_link_libraries(util INTERFACE hyhound::config guanaqo::guanaqo)

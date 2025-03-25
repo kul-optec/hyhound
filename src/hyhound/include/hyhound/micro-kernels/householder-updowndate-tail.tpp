@@ -7,14 +7,14 @@
 
 namespace hyhound::micro_kernels::householder {
 
-template <Config Conf, class UpDown>
-[[gnu::hot]] void
-updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
-                real_t *__restrict Lp, index_t ldL, const real_t *__restrict Bp,
-                index_t ldB, real_t *__restrict Ap, index_t ldA,
-                UpDownArg<UpDown> signs) noexcept {
-    using simdA = tail_simd_A_t<Conf>;
-    using simdL = tail_simd_L_t<Conf>;
+template <Config Conf, class T, class UpDown>
+[[gnu::hot]] void updowndate_tail(index_t colsA0, index_t colsA,
+                                  mut_W_accessor<T> W, T *__restrict Lp,
+                                  index_t ldL, const T *__restrict Bp,
+                                  index_t ldB, T *__restrict Ap, index_t ldA,
+                                  UpDownArg<UpDown> signs) noexcept {
+    using simdA = tail_simd_A_t<T, Conf>;
+    using simdL = tail_simd_L_t<T, Conf>;
     const mut_matrix_accessor L{Lp, ldL}, A{Ap, ldA};
     const matrix_accessor B{Bp, ldB};
     static constexpr index_t NA = simdA::size(), NL = simdL::size();
@@ -26,7 +26,7 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
     HYHOUND_ASSUME(colsA0 >= 0);
     HYHOUND_ASSUME(colsA >= colsA0);
     [[maybe_unused]] const auto W_addr = reinterpret_cast<uintptr_t>(W.data);
-    HYHOUND_ASSUME(W_addr % W_align<Conf.block_size_r> == 0);
+    HYHOUND_ASSUME((W_addr % W_align<T, Conf.block_size_r>) == 0);
 
     // Compute product U = A B
     simdA V[S / NA][R]{};
@@ -34,13 +34,15 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
         if (Conf.prefetch_dist_col_a > 0)
             __builtin_prefetch(&A(0, j + Conf.prefetch_dist_col_a), 0, 3);
         UNROLL_FOR (index_t kk = 0; kk < R; kk += NL) {
-            auto Akj = signs(B.load<simdL>(kk, j), j);
+            auto Akj = signs(B.template load<simdL>(kk, j), j);
             UNROLL_FOR (index_t k = 0; k < NL; ++k)
-                UNROLL_FOR (index_t i = 0; i < S; i += NA)
+                UNROLL_FOR (index_t i = 0; i < S; i += NA) {
+                    auto Aij = A.template load<simdA>(i, j);
                     if constexpr (signs.negate)
-                        V[i / NA][kk + k] -= A.load<simdA>(i, j) * Akj[k];
+                        V[i / NA][kk + k] -= Aij * Akj[k];
                     else
-                        V[i / NA][kk + k] += A.load<simdA>(i, j) * Akj[k];
+                        V[i / NA][kk + k] += Aij * Akj[k];
+                }
         }
     }
     // Solve system V = (L+U)W⁻¹ (in-place)
@@ -49,7 +51,7 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
         UNROLL_FOR (index_t l = 0; l < k; l += NL)
             Wk[l / NL] = W.template load<simdL>(l, k, stdx::vector_aligned);
         UNROLL_FOR (index_t i = 0; i < S; i += NA) {
-            auto Lik = L.load<simdA>(i, k);
+            auto Lik = L.template load<simdA>(i, k);
             V[i / NA][k] += Lik;
             UNROLL_FOR (index_t l = 0; l < k; ++l)
                 V[i / NA][k] -= V[i / NA][l] * Wk[l / NL][l % NL];
@@ -62,7 +64,7 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
     UNROLL_FOR_A_COLS (index_t j = 0; j < colsA0; ++j) {
         simdL Akj[R / NL];
         UNROLL_FOR (index_t kk = 0; kk < R; kk += NL)
-            Akj[kk / NL] = B.load<simdL>(kk, j);
+            Akj[kk / NL] = B.template load<simdL>(kk, j);
         UNROLL_FOR (index_t i = 0; i < S; i += NA) {
             simdA Aij{0};
             UNROLL_FOR (index_t kk = 0; kk < R; kk += NL) {
@@ -78,9 +80,9 @@ updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
             __builtin_prefetch(&A(0, j + Conf.prefetch_dist_col_a), 0, 3);
         simdL Akj[R / NL];
         UNROLL_FOR (index_t kk = 0; kk < R; kk += NL)
-            Akj[kk / NL] = B.load<simdL>(kk, j);
+            Akj[kk / NL] = B.template load<simdL>(kk, j);
         UNROLL_FOR (index_t i = 0; i < S; i += NA) {
-            auto Aij = A.load<simdA>(i, j);
+            auto Aij = A.template load<simdA>(i, j);
             UNROLL_FOR (index_t kk = 0; kk < R; kk += NL) {
                 UNROLL_FOR (index_t k = 0; k < NL; ++k)
                     Aij -= V[i / NA][kk + k] * Akj[kk / NL][k];

@@ -4,34 +4,34 @@
 
 namespace hyhound::inline serial {
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@}, Update>(MutableRealMatrixView L, MutableRealMatrixView A, Update signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Update>(MutableRealMatrixView L, MutableRealMatrixView A, Update signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Update>(MutableRealMatrixView L, MutableRealMatrixView A, Update signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Update>(MutableRealMatrixView L, MutableRealMatrixView A, Update signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@}, Downdate>(MutableRealMatrixView L, MutableRealMatrixView A, Downdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Downdate>(MutableRealMatrixView L, MutableRealMatrixView A, Downdate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Downdate>(MutableRealMatrixView L, MutableRealMatrixView A, Downdate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Downdate>(MutableRealMatrixView L, MutableRealMatrixView A, Downdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@}, UpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, UpDowndate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, UpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, UpDowndate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, UpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, UpDowndate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, UpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, UpDowndate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@}, DownUpdate>(MutableRealMatrixView L, MutableRealMatrixView A, DownUpdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DownUpdate>(MutableRealMatrixView L, MutableRealMatrixView A, DownUpdate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DownUpdate>(MutableRealMatrixView L, MutableRealMatrixView A, DownUpdate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DownUpdate>(MutableRealMatrixView L, MutableRealMatrixView A, DownUpdate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@}, DiagonalUpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, DiagonalUpDowndate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs);
 
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DiagonalUpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, DiagonalUpDowndate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DiagonalUpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, DiagonalUpDowndate signs);
-template HYHOUND_EXPORT void update_cholesky<{.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DiagonalUpDowndate>(MutableRealMatrixView L, MutableRealMatrixView A, DiagonalUpDowndate signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs);
+template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs);
 
 } // namespace hyhound::inline serial

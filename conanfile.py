@@ -28,12 +28,12 @@ class HyhoundRecipe(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "real_type": ["double", "float"],
+        "real_type": ["double;float", "float;double", "double", "float"],
     } | {k: [True, False] for k in bool_hyhound_options}
     default_options = {
         "shared": False,
         "fPIC": True,
-        "real_type": "double",
+        "real_type": "double;float",
     } | bool_hyhound_options
 
     # Sources are located in the same place as this recipe, copy them to the recipe

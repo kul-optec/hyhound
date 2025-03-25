@@ -6,15 +6,15 @@
 
 namespace hyhound::micro_kernels::householder {
 
-template void updowndate_diag<@R@, Update>(
-    index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL, real_t *Ad, index_t ldA, UpDownArg<Update> signs) noexcept;
-template void updowndate_diag<@R@, Downdate>(
-    index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL, real_t *Ad, index_t ldA, UpDownArg<Downdate> signs) noexcept;
-template void updowndate_diag<@R@, UpDowndate>(
-    index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL, real_t *Ad, index_t ldA, UpDownArg<UpDowndate> signs) noexcept;
-template void updowndate_diag<@R@, DownUpdate>(
-    index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL, real_t *Ad, index_t ldA, UpDownArg<DownUpdate> signs) noexcept;
-template void updowndate_diag<@R@, DiagonalUpDowndate>(
-    index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL, real_t *Ad, index_t ldA, UpDownArg<DiagonalUpDowndate> signs) noexcept;
+template void updowndate_diag<@R@, @T@, Update>(
+    index_t colsA, mut_W_accessor<@T@> W, @T@ *Ld, index_t ldL, @T@ *Ad, index_t ldA, UpDownArg<Update> signs) noexcept;
+template void updowndate_diag<@R@, @T@, Downdate>(
+    index_t colsA, mut_W_accessor<@T@> W, @T@ *Ld, index_t ldL, @T@ *Ad, index_t ldA, UpDownArg<Downdate> signs) noexcept;
+template void updowndate_diag<@R@, @T@, UpDowndate<@T@>>(
+    index_t colsA, mut_W_accessor<@T@> W, @T@ *Ld, index_t ldL, @T@ *Ad, index_t ldA, UpDownArg<UpDowndate<@T@>> signs) noexcept;
+template void updowndate_diag<@R@, @T@, DownUpdate<@T@>>(
+    index_t colsA, mut_W_accessor<@T@> W, @T@ *Ld, index_t ldL, @T@ *Ad, index_t ldA, UpDownArg<DownUpdate<@T@>> signs) noexcept;
+template void updowndate_diag<@R@, @T@, DiagonalUpDowndate<@T@>>(
+    index_t colsA, mut_W_accessor<@T@> W, @T@ *Ld, index_t ldL, @T@ *Ad, index_t ldA, UpDownArg<DiagonalUpDowndate<@T@>> signs) noexcept;
 
 }

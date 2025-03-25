@@ -1,6 +1,9 @@
 #pragma once
 
 #include <hyhound/config.hpp>
+
+#include <guanaqo/mat-view.hpp>
+
 #include <experimental/simd>
 #include <cstddef>
 
@@ -80,7 +83,9 @@ struct mat_access_impl {
         default;
 };
 
-using matrix_accessor     = mat_access_impl<const real_t>;
-using mut_matrix_accessor = mat_access_impl<real_t>;
+template <class T>
+using matrix_accessor = mat_access_impl<const T>;
+template <class T>
+using mut_matrix_accessor = mat_access_impl<T>;
 
 } // namespace hyhound::micro_kernels

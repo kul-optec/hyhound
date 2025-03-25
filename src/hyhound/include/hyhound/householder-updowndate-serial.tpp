@@ -8,9 +8,8 @@
 
 namespace hyhound::inline serial {
 
-template <Config Conf, class UpDown>
-void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
-                     UpDown signs) {
+template <class T, Config<T> Conf, class UpDown>
+void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
     constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
     constexpr index_t N       = Conf.num_blocks_r;
     constexpr bool do_packing = Conf.enable_packing;
@@ -26,11 +25,11 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
     assert(L.rows == A.rows);
     constinit static auto full_microkernel_lut =
         make_1d_lut<R>([]<index_t NR>(index_constant<NR>) {
-            return updowndate_full<NR + 1, UpDown>;
+            return updowndate_full<NR + 1, T, UpDown>;
         });
     constinit static auto diag_microkernel_lut =
         make_1d_lut<R>([]<index_t NR>(index_constant<NR>) {
-            return updowndate_diag<NR + 1, UpDown>;
+            return updowndate_diag<NR + 1, T, UpDown>;
         });
     constinit static auto tail_microkernel_lut =
         make_1d_lut<R>([]<index_t NR>(index_constant<NR>) {
@@ -38,31 +37,31 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                 .block_size_r        = NR + 1,
                 .block_size_s        = S,
                 .prefetch_dist_col_a = Conf.prefetch_dist_col_a};
-            return updowndate_tile_tail<uConf, UpDown>;
+            return updowndate_tile_tail<uConf, T, UpDown>;
         });
 
     // Leaner accessors (without unnecessary dimensions and strides).
-    micro_kernels::mut_matrix_accessor L_{L}, A_{A};
+    micro_kernels::mut_matrix_accessor<T> L_{L}, A_{A};
     // Workspace storage for W (upper triangular Householder representation)
-    micro_kernels::householder::matrix_W_storage<> W[N];
+    micro_kernels::householder::matrix_W_storage<T> W[N];
 
     // Optional packing of one block row of A.
     auto A_pack_storage = [&] {
         if constexpr (do_packing) {
             index_t num_pack = R * A.cols * N;
-            return std::vector<real_t>(num_pack);
+            return std::vector<T>(num_pack);
         } else {
             struct Empty {};
             return Empty{};
         }
     }();
-    real_t *A_pack[N];
+    T *A_pack[N];
     if constexpr (do_packing)
         for (index_t i = 0; i < N; ++i)
             A_pack[i] = &A_pack_storage[R * A.cols * i];
-    auto pack_Ad = [&](index_t k) -> micro_kernels::mut_matrix_accessor {
+    auto pack_Ad = [&](index_t k) -> micro_kernels::mut_matrix_accessor<T> {
         if constexpr (do_packing) {
-            MutableRealMatrixView Ad{
+            MatrixView<T> Ad{
                 {.data = A_pack[(k / R) % N], .rows = R, .cols = A.cols}};
             Ad = A.middle_rows(k, R);
             return Ad;
@@ -73,7 +72,7 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
     // Process all diagonal blocks (in multiples of NR, except the last).
     index_t k;
     for (k = 0; k + R * N <= L.cols; k += R * N) {
-        micro_kernels::mut_matrix_accessor Adk[N];
+        micro_kernels::mut_matrix_accessor<T> Adk[N];
         // Process all rows in the diagonal block (in multiples of R)
         for (index_t kk = 0; kk < R * N; kk += R) {
             // Pack the part of A corresponding to this diagonal block
@@ -81,12 +80,12 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
             // Process blocks left of the diagonal
             for (index_t cc = 0; cc < kk; cc += R) {
                 auto Ls = L_.block(k + kk, k + cc);
-                updowndate_tail<uConfR, UpDown>(0, A.cols, W[cc / R], Ls,
-                                                Adk[cc / R], Ad, signs);
+                updowndate_tail<uConfR, T, UpDown>(0, A.cols, W[cc / R], Ls,
+                                                   Adk[cc / R], Ad, signs);
             }
             auto Ld = L_.block(k + kk, k + kk);
             // Process the diagonal block itself
-            updowndate_diag<R, UpDown>(A.cols, W[kk / R], Ld, Ad, signs);
+            updowndate_diag<R, T, UpDown>(A.cols, W[kk / R], Ld, Ad, signs);
         }
         // Process all rows below the diagonal block (in multiples of S).
         foreach_chunked(
@@ -98,8 +97,8 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                     auto Ls = L_.block(i, k + cc);
                     for (index_t c = 0; c < R; ++c)
                         __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
-                    updowndate_tail<uConf, UpDown>(0, A.cols, W[cc / R], Ls,
-                                                   Adk[cc / R], As, signs);
+                    updowndate_tail<uConf, T, UpDown>(0, A.cols, W[cc / R], Ls,
+                                                      Adk[cc / R], As, signs);
                 }
             },
             [&](index_t i, index_t rem_i) {
@@ -109,9 +108,9 @@ void update_cholesky(MutableRealMatrixView L, MutableRealMatrixView A,
                     auto Ls = L_.block(i, k + cc);
                     for (index_t c = 0; c < R; ++c)
                         __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
-                    updowndate_tile_tail<uConf, UpDown>(rem_i, 0, A.cols,
-                                                        W[cc / R], Ls,
-                                                        Adk[cc / R], As, signs);
+                    updowndate_tile_tail<uConf, T, UpDown>(
+                        rem_i, 0, A.cols, W[cc / R], Ls, Adk[cc / R], As,
+                        signs);
                 }
             },
             LoopDir::Forward);

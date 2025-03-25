@@ -19,7 +19,7 @@ namespace hyhound {
 namespace {
 
 struct ProblemMatrices {
-    Eigen::MatrixXd K̃, K, L, A;
+    Eigen::MatrixX<real_t> K̃, K, L, A;
 };
 
 constexpr auto use_index_t = guanaqo::with_index_type<index_t>;
@@ -34,7 +34,7 @@ ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
     assert(l >= n);
 
     std::mt19937 rng{12345};
-    std::uniform_real_distribution<> dist(0.0, 1.0);
+    std::uniform_real_distribution<real_t> dist(-1, 1);
     ProblemMatrices mat;
     mat.K̃.resize(l, l), mat.K.resize(l, l), mat.L.resize(l, n);
     mat.A.resize(l, m);
@@ -67,9 +67,9 @@ ProblemMatrices generate_problem(index_t m, index_t n, index_t l = 0) {
 
 real_t calculate_error(const ProblemMatrices &matrices,
                        const Eigen::Ref<const Eigen::MatrixX<real_t>> &L̃) {
-    const auto n      = static_cast<index_t>(L̃.cols()),
-               l      = static_cast<index_t>(L̃.rows());
-    Eigen::MatrixXd E = matrices.K̃;
+    const auto n             = static_cast<index_t>(L̃.cols()),
+               l             = static_cast<index_t>(L̃.rows());
+    Eigen::MatrixX<real_t> E = matrices.K̃;
 #if GUANAQO_WITH_OPENMP
     int old_num_threads = omp_get_max_threads();
     omp_set_num_threads(std::thread::hardware_concurrency());
@@ -104,9 +104,9 @@ struct HyHDown : testing::TestWithParam<index_t> {};
 TEST_P(HyHDown, VariousSizes) {
     index_t n = GetParam();
     for (index_t m : {1, 2, 3, 4, 5, 6, 7, 8, 11, 16, 17, 31, 32}) {
-        auto matrices     = hyhound::generate_problem(m, n);
-        Eigen::MatrixXd L̃ = matrices.L;
-        Eigen::MatrixXd Ã = matrices.A;
+        auto matrices            = hyhound::generate_problem(m, n);
+        Eigen::MatrixX<real_t> L̃ = matrices.L;
+        Eigen::MatrixX<real_t> Ã = matrices.A;
         hyhound::update_cholesky(as_view(L̃, use_index_t),
                                  as_view(Ã, use_index_t), hyhound::Downdate());
         real_t residual = hyhound::calculate_error(matrices, L̃);
@@ -120,9 +120,9 @@ TEST_P(HyHDownRect, VariousSizes) {
     index_t n       = GetParam();
     const index_t m = 13;
     for (index_t l = n; l < n + 7; ++l) {
-        auto matrices     = hyhound::generate_problem(m, n, l);
-        Eigen::MatrixXd L̃ = matrices.L;
-        Eigen::MatrixXd Ã = matrices.A;
+        auto matrices            = hyhound::generate_problem(m, n, l);
+        Eigen::MatrixX<real_t> L̃ = matrices.L;
+        Eigen::MatrixX<real_t> Ã = matrices.A;
         hyhound::update_cholesky(as_view(L̃, use_index_t),
                                  as_view(Ã, use_index_t), hyhound::Downdate());
         real_t residual = hyhound::calculate_error(matrices, L̃);

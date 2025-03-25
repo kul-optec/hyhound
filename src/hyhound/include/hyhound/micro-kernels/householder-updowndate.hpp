@@ -27,56 +27,56 @@ constexpr index_t MaxSizeR = 32;
 // in a higher throughput for 8-element vectors.
 #if __AVX512F__
 #if HYHOUND_HAVE_TWO_512_FMA_UNITS
-template <index_t R>
-using diag_simd_t = optimal_simd_type_t<R, native_simd_size>;
+template <class T, index_t R>
+using diag_simd_t = optimal_simd_type_t<T, R, native_simd_size<T>>;
 #else
-template <index_t R>
-using diag_simd_t = optimal_simd_type_t<R, native_simd_size / 2>;
+template <class T, index_t R>
+using diag_simd_t = optimal_simd_type_t<T, R, native_simd_size<T> / 2>;
 #endif
 #else
-template <index_t R>
-using diag_simd_t = optimal_simd_type_t<R>;
+template <class T, index_t R>
+using diag_simd_t = optimal_simd_type_t<T, R>;
 #endif
-template <Config Conf>
-using tail_simd_L_t = optimal_simd_type_t<Conf.block_size_r>;
-template <Config Conf>
-using tail_simd_A_t = optimal_simd_type_t<Conf.block_size_s>;
+template <class T, Config Conf>
+using tail_simd_L_t = optimal_simd_type_t<T, Conf.block_size_r>;
+template <class T, Config Conf>
+using tail_simd_A_t = optimal_simd_type_t<T, Conf.block_size_s>;
 
 /// Ensures that the matrix W is aligned for SIMD.
-template <index_t R = MaxSizeR>
-constexpr size_t W_align = stdx::memory_alignment_v<
-    stdx::simd<real_t, stdx::simd_abi::deduce_t<real_t, R>>>;
+template <class T, index_t R = MaxSizeR>
+constexpr size_t W_align =
+    stdx::memory_alignment_v<stdx::simd<T, stdx::simd_abi::deduce_t<T, R>>>;
 
 /// Ensures that the first element of every column of W is aligned for SIMD.
-template <index_t R = MaxSizeR>
-constexpr size_t W_stride = (R * sizeof(real_t) + W_align<R> - 1) / W_align<R> *
-                            W_align<R> / sizeof(real_t);
+template <class T, index_t R = MaxSizeR>
+constexpr size_t W_stride = (R * sizeof(T) + W_align<T, R> - 1) /
+                            W_align<T, R> * W_align<T, R> / sizeof(T);
 /// Size of the matrix W.
-template <index_t R = MaxSizeR>
-constexpr size_t W_size = (W_stride<R> * R * sizeof(real_t) + W_align<R> - 1) /
-                          W_align<R> * W_align<R> / sizeof(real_t);
+template <class T, index_t R = MaxSizeR>
+constexpr size_t W_size = (W_stride<T, R> * R * sizeof(T) + W_align<T, R> - 1) /
+                          W_align<T, R> * W_align<T, R> / sizeof(T);
 
-template <index_t R = MaxSizeR>
+template <class T, index_t R = MaxSizeR>
 using mut_W_accessor =
-    mat_access_impl<real_t, std::integral_constant<index_t, W_stride<R>>>;
+    mat_access_impl<T, std::integral_constant<index_t, W_stride<T, R>>>;
 
-template <index_t R = MaxSizeR>
+template <class T, index_t R = MaxSizeR>
 struct matrix_W_storage {
-    alignas(W_align<R>) real_t W[W_stride<R> * R]{};
-    constexpr operator mut_W_accessor<R>() { return {W}; }
+    alignas(W_align<T, R>) T W[W_stride<T, R> * R]{};
+    constexpr operator mut_W_accessor<T, R>() { return {W}; }
 };
 
-template <index_t R, class UpDown>
-void updowndate_diag(index_t colsA, mut_W_accessor<> W, real_t *Ld, index_t ldL,
-                     real_t *Ad, index_t ldA, UpDownArg<UpDown> signs) noexcept;
+template <index_t R, class T, class UpDown>
+void updowndate_diag(index_t colsA, mut_W_accessor<T> W, T *Ld, index_t ldL,
+                     T *Ad, index_t ldA, UpDownArg<UpDown> signs) noexcept;
 
-template <index_t R, class UpDown>
-void updowndate_full(index_t colsA, real_t *Ld, index_t ldL, real_t *Ad,
-                     index_t ldA, UpDownArg<UpDown> signs) noexcept;
+template <index_t R, class T, class UpDown>
+void updowndate_full(index_t colsA, T *Ld, index_t ldL, T *Ad, index_t ldA,
+                     UpDownArg<UpDown> signs) noexcept;
 
-template <Config Conf, class UpDown>
-void updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<> W,
-                     real_t *Lp, index_t ldL, const real_t *Bp, index_t ldB,
-                     real_t *Ap, index_t ldA, UpDownArg<UpDown> signs) noexcept;
+template <Config Conf, class T, class UpDown>
+void updowndate_tail(index_t colsA0, index_t colsA, mut_W_accessor<T> W, T *Lp,
+                     index_t ldL, const T *Bp, index_t ldB, T *Ap, index_t ldA,
+                     UpDownArg<UpDown> signs) noexcept;
 
 } // namespace hyhound::micro_kernels::householder

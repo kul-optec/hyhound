@@ -2,15 +2,17 @@
 #include <hyhound/ocp/schur.hpp>
 
 #include <gtest/gtest.h>
+#include <limits>
 
 TEST(OCP, factorization) {
     using std::exp2;
+    using std::pow;
     using namespace hyhound;
     using namespace hyhound::ocp;
     std::mt19937 rng{321};
     std::normal_distribution<real_t> nrml{0, 5};
     std::bernoulli_distribution bern{0.8};
-    const real_t ε = 1e-10;
+    const real_t ε = pow(std::numeric_limits<real_t>::epsilon(), real_t(0.5));
 
     // Generate random OCP
     OCPDataRiccati ocp{.N = 5, .nx = 13, .nu = 11, .ny = 8};
@@ -36,7 +38,7 @@ TEST(OCP, factorization) {
     for (index_t j = 0; j < ocp.N + 1; ++j) {
         auto err = factor_sch.λ.col(j) - factor_ric.λ.col(j);
         EXPECT_TRUE(err.allFinite()) << " λ(" << j << ")";
-        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), ε) << " λ(" << j << ")";
+        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), 10 * ε) << " λ(" << j << ")";
     }
     // u
     for (index_t j = 0; j < ocp.N; ++j) {
@@ -61,7 +63,7 @@ TEST(OCP, factorization) {
     for (index_t j = 0; j < ocp.N; ++j) {
         auto err = factor_ric.L(j) - new_factor_ric.L(j);
         EXPECT_TRUE(err.allFinite()) << " L(" << j << ")";
-        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), ε) << " L(" << j << ")";
+        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), 10 * ε) << " L(" << j << ")";
     }
     {
         const auto j = ocp.N;
@@ -79,13 +81,13 @@ TEST(OCP, factorization) {
     for (index_t j = 0; j < ocp.N; ++j) {
         auto err = factor_sch.LH(j) - new_factor_sch.LH(j);
         EXPECT_TRUE(err.allFinite()) << " LH(" << j << ")";
-        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), ε) << " LH(" << j << ")";
+        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), 10 * ε) << " LH(" << j << ")";
     }
     {
         const auto j = ocp.N;
         auto err     = factor_sch.LHxx(j) - new_factor_sch.LHxx(j);
         EXPECT_TRUE(err.allFinite()) << " LH(" << j << ")";
-        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), ε) << " LH(" << j << ")";
+        EXPECT_LE(err.lpNorm<Eigen::Infinity>(), 10 * ε) << " LH(" << j << ")";
     }
 
     // LΨd
