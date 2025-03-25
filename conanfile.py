@@ -58,14 +58,20 @@ class HyhoundRecipe(ConanFile):
     generators = ("CMakeDeps",)
 
     def requirements(self):
-        self.requires("guanaqo/1.0.0-alpha.12", transitive_headers=True)
+        self.requires(
+            "guanaqo/1.0.0-alpha.12", transitive_headers=True, transitive_libs=True
+        )
+        if self.options.with_ocp:
+            self.requires("eigen/3.4.0", transitive_headers=True)
+        elif self.options.with_benchmarks:
+            self.requires("eigen/3.4.0")
+        else:
+            self.test_requires("eigen/3.4.0")
         if self.options.with_benchmarks:
             self.requires("benchmark/1.8.4")
-            self.requires("gtest/1.15.0")
-            self.requires("eigen/tttapa.20240516", force=True)
-        else:
-            self.test_requires("gtest/1.15.0")
-            self.test_requires("eigen/tttapa.20240516", force=True)
+
+    def build_requirements(self):
+        self.test_requires("gtest/1.15.0")
         self.tool_requires("cmake/[>=3.24 <4]")
 
     def config_options(self):
