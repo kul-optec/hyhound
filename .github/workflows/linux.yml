@@ -5,11 +5,12 @@ on:
 
 jobs:
   build:
-    name: "Build (GCC ${{ matrix.gcc }}, ${{ matrix.build_type }}, ${{ matrix.profile }})"
+    name: "Build (GCC ${{ matrix.gcc }}, ${{ matrix.build_type }}, ${{ matrix.link }}, ${{ matrix.profile }})"
     strategy:
       matrix:
         gcc: ["12", "14"]
         build_type: ["Release", "Debug"]
+        link: ["shared", "static"]
         profile: ["laptop"]
       fail-fast: false
     runs-on: ubuntu-24.04
@@ -33,5 +34,6 @@ jobs:
         -o guanaqo/\*:with_mkl=False
         -o \&:with_ocp=True
         -o \&:with_benchmarks=True
+        -o \&:shared=${{ matrix.link == 'shared' && 'True' || 'False' }}
 
     - run: conan cache clean

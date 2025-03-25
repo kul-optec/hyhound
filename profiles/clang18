@@ -15,13 +15,11 @@ cmake/[>=3.24 <4]
 [buildenv]
 MKLROOT={{ os.getenv("MKLROOT") or os.path.join(os.getenv("HOME"), "intel/oneapi/mkl/latest")}}
 VTUNE_PROFILER_DIR={{ os.getenv("VTUNE_PROFILER_DIR") or os.path.join(os.getenv("HOME"), "intel/oneapi/vtune/latest")}}
-LD_LIBRARY_PATH=!
-LD_PRELOAD=!
 
 [conf]
 tools.build:compiler_executables*={"c": "clang-18", "cpp": "clang++-18", "fortran": "flang-18"}
 tools.cmake.cmaketoolchain:generator=Ninja Multi-Config
-tools.build:exelinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
-tools.build:sharedlinkflags+=["-flto=auto", "-static-libstdc++", "-static-libgcc"]
+tools.build:exelinkflags+=["-flto=auto", "-static-libstdc++"]
+tools.build:sharedlinkflags+=["-flto=auto", "-static-libstdc++"]
 tools.build:exelinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]
 tools.build:sharedlinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]
