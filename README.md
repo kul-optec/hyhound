@@ -71,3 +71,58 @@ OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-hyh \
 OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-ocp \
     --benchmark_out=ocp.json --benchmark_repetitions=5 --benchmark_min_time=1000x
 ```
+
+## Benchmarks
+
+Comparisons of the run time and performance between explicit evaluation and
+factorization of the matrix $\tilde H = H + A\Sigma A^\top$ (_Full factorization_)
+versus factorization updates using `hyhound::update_cholesky` (_HyH update_),
+for different matrix sizes $n$ and varying update ranks $m$.
+Versions with different block sizes $r$ are shown in different colors (with the
+unblocked version in gray).
+
+Experiments carried out on Intel Core i7-11700 at 2.5 GHz
+(without dynamic frequency scaling), using version 2025.0 of the Intel MKL
+for the full factorization (serial).
+
+### Large matrices
+
+| Double precision |
+|:---:|
+| ![](images/hyh-avx512f-double-1024.json.rel.svg) |
+
+| Single precision |
+|:---:|
+| ![](images/hyh-avx512f-float-1024.json.rel.svg) |
+
+| Double precision | Single precision |
+|:---:|:---:|
+| ![](images/hyh-avx512f-double-1024.json.gflops.svg) | ![](images/hyh-avx512f-float-1024.json.gflops.svg) |
+
+### Medium-sized matrices
+
+| Double precision |
+|:---:|
+| ![](images/hyh-avx512f-double-64.json.rel.svg) |
+
+| Single precision |
+|:---:|
+| ![](images/hyh-avx512f-float-64.json.rel.svg) |
+
+| Double precision | Single precision |
+|:---:|:---:|
+| ![](images/hyh-avx512f-double-64.json.gflops.svg) | ![](images/hyh-avx512f-float-64.json.gflops.svg) |
+
+### Small matrices
+
+| Double precision |
+|:---:|
+| ![](images/hyh-avx512f-double-16.json.rel.svg) |
+
+| Single precision |
+|:---:|
+| ![](images/hyh-avx512f-float-16.json.rel.svg) |
+
+| Double precision | Single precision |
+|:---:|:---:|
+| ![](images/hyh-avx512f-double-16.json.gflops.svg) | ![](images/hyh-avx512f-float-16.json.gflops.svg) |

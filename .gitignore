@@ -1,3 +1,8 @@
 build
 .*cache
 CMakeUserPresets.json
+*.pdf
+*.png
+*.svg
+hyh*.json
+ocp*.json
