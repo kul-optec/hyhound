@@ -83,6 +83,7 @@ class HyhoundRecipe(ConanFile):
 
     def layout(self):
         cmake_layout(self)
+        self.cpp.build.builddirs.append("")
 
     def generate(self):
         tc = CMakeToolchain(self)
