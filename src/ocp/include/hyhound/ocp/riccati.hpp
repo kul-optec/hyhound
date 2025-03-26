@@ -55,15 +55,15 @@ struct HYHOUND_OCP_EXPORT OCPDataRiccati {
 
     void init_random(uint_fast32_t seed = 0) {
         std::mt19937 rng{seed};
-        std::normal_distribution<real_t> nrml{0, 1};
+        std::uniform_real_distribution<real_t> uni{-1, 1};
         for (index_t i = 0; i < N; ++i) {
             auto Ai = A(i), Bi = B(i), Ci = C(i), Di = D(i);
             auto Hi = H(i);
-            std::ranges::generate(Ai.reshaped(), [&] { return nrml(rng) / 2; });
-            std::ranges::generate(Bi.reshaped(), [&] { return nrml(rng); });
-            std::ranges::generate(Ci.reshaped(), [&] { return nrml(rng); });
-            std::ranges::generate(Di.reshaped(), [&] { return nrml(rng); });
-            std::ranges::generate(Hi.reshaped(), [&] { return nrml(rng); });
+            std::ranges::generate(Ai.reshaped(), [&] { return uni(rng) / 2; });
+            std::ranges::generate(Bi.reshaped(), [&] { return uni(rng); });
+            std::ranges::generate(Ci.reshaped(), [&] { return uni(rng); });
+            std::ranges::generate(Di.reshaped(), [&] { return uni(rng); });
+            std::ranges::generate(Hi.reshaped(), [&] { return uni(rng); });
             auto nux = nu + nx;
             Hi += static_cast<real_t>(nux) * mat::Identity(nux, nux);
             Hi.triangularView<Eigen::StrictlyUpper>() =
@@ -71,14 +71,14 @@ struct HYHOUND_OCP_EXPORT OCPDataRiccati {
         }
         auto Ci = C(N);
         auto Qi = Q(N);
-        std::ranges::generate(Ci.reshaped(), [&] { return nrml(rng); });
-        std::ranges::generate(Qi.reshaped(), [&] { return nrml(rng); });
+        std::ranges::generate(Ci.reshaped(), [&] { return uni(rng); });
+        std::ranges::generate(Qi.reshaped(), [&] { return uni(rng); });
         Qi += static_cast<real_t>(nx) * mat::Identity(nx, nx);
         Qi.triangularView<Eigen::StrictlyUpper>() =
             Qi.triangularView<Eigen::StrictlyLower>().transpose();
         // Random right-hand sides
-        std::ranges::generate(rqs.reshaped(), [&] { return nrml(rng); });
-        std::ranges::generate(es.reshaped(), [&] { return nrml(rng); });
+        std::ranges::generate(rqs.reshaped(), [&] { return uni(rng); });
+        std::ranges::generate(es.reshaped(), [&] { return uni(rng); });
     }
 };
 
