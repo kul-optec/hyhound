@@ -211,21 +211,19 @@ int main(int argc, char **argv) {
     int64_t M = 8, N = 256;
     for (auto it = argvv.begin(); it != argvv.end();) {
         std::string_view arg = *it;
-        if (arg == "--fix-m") {
+        if (arg == "--fix-m")
             fix_m = true;
-            argvv.erase(it);
-        } else if (arg == "--fix-n") {
+        else if (arg == "--fix-n")
             fix_m = false;
-            argvv.erase(it);
-        } else if (std::string_view flag = "--m="; arg.starts_with(flag)) {
+        else if (std::string_view flag = "--m="; arg.starts_with(flag))
             M = std::stoi(std::string(arg.substr(flag.size())));
-            argvv.erase(it);
-        } else if (std::string_view flag = "--n="; arg.starts_with(flag)) {
+        else if (std::string_view flag = "--n="; arg.starts_with(flag))
             N = std::stoi(std::string(arg.substr(flag.size())));
-            argvv.erase(it);
-        } else {
+        else {
             ++it;
+            continue;
         }
+        it = argvv.erase(it);
     }
     configure_benchmarks(fix_m, M, N);
 
