@@ -65,7 +65,7 @@ Only libstdc++ is currently supported (GCC 12-14 or Clang 18-20).
 ```sh
 OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-hyh \
     --benchmark_out=hyh.json --benchmark_repetitions=5 --benchmark_min_time=0.02s \
-    --benchmark_enable_random_interleaving --fix-n --n=64
+    --benchmark_enable_random_interleaving --fix-n --n=64 --m=128
 ```
 ```sh
 OMP_NUM_THREADS=1 ./build/benchmarks/Release/benchmark-ocp \
