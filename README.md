@@ -52,7 +52,7 @@ OpenBLAS can be used instead of the Intel MKL by passing the option
 `-o guanaqo/\*:with_mkl=False` to Conan. Be sure to use CMake's
 `--fresh` flag to reconfigure the project after making this change.
 
-Only libstdc++ is currently supported (GCC 12-14 or Clang 18-20).
+Only libstdc++ is currently supported (GCC 12-15 or Clang 18-20).
 
 #### Reproducing the benchmark results
 

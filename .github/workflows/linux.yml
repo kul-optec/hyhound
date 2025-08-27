@@ -8,7 +8,7 @@ jobs:
     name: "Build (GCC ${{ matrix.gcc }}, ${{ matrix.build_type }}, ${{ matrix.link }}, ${{ matrix.profile }})"
     strategy:
       matrix:
-        gcc: ["12", "14"]
+        gcc: ["12", "15"]
         build_type: ["Release", "Debug"]
         link: ["shared", "static"]
         profile: ["laptop"]
