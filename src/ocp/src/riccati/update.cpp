@@ -7,6 +7,10 @@
 
 namespace hyhound::ocp {
 
+static auto with_signature_matrix(auto &&S) {
+    return hyhound::UpDowndate{guanaqo::as_span(S.reshaped())};
+}
+
 void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
     using namespace guanaqo::blas;
     using std::abs;
@@ -34,9 +38,7 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
             auto SNJ = factor.S.leftCols(nJ);
             xgemm_TN(real_t{1}, vw(ocp.F(ocp.N - 1)), vw(YNJ), real_t{0},
                      vw(ΦNJ));
-            update_cholesky(
-                vw(LxxN), vw(YNJ),
-                hyhound::UpDowndate{guanaqo::as_span(SNJ.reshaped())});
+            update_cholesky(vw(LxxN), vw(YNJ), with_signature_matrix(SNJ));
         }
     }
     for (index_t j = ocp.N; j-- > 0;) {
@@ -59,12 +61,10 @@ void update(RiccatiFactor &factor, Eigen::Ref<const mat> ΔΣ) {
         auto Lj     = factor.L(j);
         auto Luuxuj = Lj.leftCols(ocp.nu);
         auto Lxxj   = Lj.bottomRightCorner(ocp.nx, ocp.nx);
-        update_cholesky(vw(Luuxuj), vw(YjJ),
-                        hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
+        update_cholesky(vw(Luuxuj), vw(YjJ), with_signature_matrix(SjJ));
         if (j > 0)
             xgemm_TN(real_t{1}, vw(ocp.F(j - 1)), vw(YjJx), real_t{0}, vw(ΦjJ));
-        update_cholesky(vw(Lxxj), vw(YjJx),
-                        hyhound::UpDowndate{guanaqo::as_span(SjJ.reshaped())});
+        update_cholesky(vw(Lxxj), vw(YjJx), with_signature_matrix(SjJ));
     }
 }
 

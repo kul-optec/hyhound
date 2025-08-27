@@ -1,4 +1,4 @@
-include({{ os.path.join(profile_dir, "gcc14") }})
+include({{ os.path.join(profile_dir, "gcc15") }})
 
 [settings]
 arch=x86_64

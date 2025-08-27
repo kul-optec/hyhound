@@ -183,7 +183,7 @@ std::vector<::benchmark::internal::Benchmark *> benchmarks;
 #define BM_BLK_PRIVATE_REGISTER_F(TestName)                                    \
     BENCHMARK_PRIVATE_DECLARE(TestName) = [] {                                 \
         using ::benchmark::internal::RegisterBenchmarkInternal;                \
-        auto *bm = RegisterBenchmarkInternal(new TestName());                  \
+        auto *bm = RegisterBenchmarkInternal(std::make_unique<TestName>());    \
         benchmarks.push_back(bm);                                              \
         return bm;                                                             \
     }()

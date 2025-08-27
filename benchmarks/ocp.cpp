@@ -9,12 +9,12 @@
 using namespace hyhound;
 using namespace hyhound::ocp;
 
-auto generate_ocp(index_t ny) {
+auto generate_ocp() {
     using std::exp2;
     std::mt19937 rng{321};
     std::normal_distribution<real_t> nrml{0, 10};
 
-    OCPDataRiccati ocp{.N = 24, .nx = 24, .nu = 8, .ny = ny};
+    OCPDataRiccati ocp{.N = 20, .nx = 24, .nu = 8, .ny = 24};
     ocp.init_random(123);
 
     mat Σ = mat::Zero(ocp.ny, ocp.N + 1);
@@ -23,27 +23,19 @@ auto generate_ocp(index_t ny) {
 }
 
 void bm_factor_riccati(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
+    auto [ocp, Σ] = generate_ocp();
     RiccatiFactor fac{.ocp = ocp};
     for (auto _ : state)
         factor(fac, Σ);
-}
-
-void bm_solve_riccati(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
-    RiccatiFactor fac{.ocp = ocp};
-    factor(fac, Σ);
-    for (auto _ : state)
-        solve(fac);
 }
 
 void bm_update_riccati(benchmark::State &state) {
     using std::exp2;
     std::mt19937 rng{54321};
     std::normal_distribution<real_t> nrml{0, 10};
-    std::bernoulli_distribution bern{0.25};
+    std::bernoulli_distribution bern{static_cast<double>(state.range(0)) / 100};
 
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
+    auto [ocp, Σ] = generate_ocp();
     RiccatiFactor fac{.ocp = ocp};
     mat ΔΣ = Σ;
     for (auto _ : state) {
@@ -58,29 +50,20 @@ void bm_update_riccati(benchmark::State &state) {
 }
 
 void bm_factor_schur(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
+    auto [ocp, Σ] = generate_ocp();
     auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
     SchurFactor factor_sch{.ocp = ocp_sch};
     for (auto _ : state)
         factor(factor_sch, Σ);
 }
 
-void bm_solve_schur(benchmark::State &state) {
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
-    auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
-    SchurFactor factor_sch{.ocp = ocp_sch};
-    factor(factor_sch, Σ);
-    for (auto _ : state)
-        solve(factor_sch);
-}
-
 void bm_update_schur(benchmark::State &state) {
     using std::exp2;
     std::mt19937 rng{54321};
     std::normal_distribution<real_t> nrml{0, 10};
-    std::bernoulli_distribution bern{0.25};
+    std::bernoulli_distribution bern{static_cast<double>(state.range(0)) / 100};
 
-    auto [ocp, Σ] = generate_ocp(static_cast<index_t>(state.range(0)));
+    auto [ocp, Σ] = generate_ocp();
     auto ocp_sch  = OCPDataSchur::from_riccati(ocp);
     SchurFactor factor_sch{.ocp = ocp_sch};
     mat ΔΣ = Σ;
@@ -96,12 +79,10 @@ void bm_update_schur(benchmark::State &state) {
     }
 }
 
-BENCHMARK(bm_factor_riccati)->ArgNames({"ny"})->DenseRange(1, 12, 1);
-BENCHMARK(bm_solve_riccati)->ArgNames({"ny"})->DenseRange(1, 12, 1);
-BENCHMARK(bm_update_riccati)->ArgNames({"ny"})->DenseRange(1, 12, 1);
-BENCHMARK(bm_factor_schur)->ArgNames({"ny"})->DenseRange(1, 12, 1);
-BENCHMARK(bm_solve_schur)->ArgNames({"ny"})->DenseRange(1, 12, 1);
-BENCHMARK(bm_update_schur)->ArgNames({"ny"})->DenseRange(1, 12, 1);
+BENCHMARK(bm_factor_riccati);
+BENCHMARK(bm_update_riccati)->ArgNames({"prcnt"})->DenseRange(1, 20, 1);
+BENCHMARK(bm_factor_schur);
+BENCHMARK(bm_update_schur)->ArgNames({"prcnt"})->DenseRange(1, 20, 1);
 
 int main(int argc, char **argv) {
     ::benchmark::Initialize(&argc, argv);

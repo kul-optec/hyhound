@@ -33,21 +33,15 @@ cd hyhound
 git clone https://github.com/tttapa/conan-recipes
 conan remote add tttapa-conan-recipes "$PWD/conan-recipes"
 ```
-Install the dependencies using Conan:
+Install the dependencies using Conan and build the project:
 ```sh
-conan install . --build=missing -pr profiles/desktop \
+conan build . --build=missing -pr profiles/desktop \
     -s build_type=Release \
     -c tools.build:skip_test=True \
     -o guanaqo/\*:with_openmp=True \
     -o guanaqo/\*:with_mkl=True \
     -o \&:with_ocp=True \
     -o \&:with_benchmarks=True
-```
-Configure and build the hyhound library and benchmarks:
-```sh
-. build/generators/conanbuild.sh
-cmake --preset conan-default
-cmake --build --preset conan-release -j
 ```
 
 The `desktop` profile enables AVX-512. If this is not supported by your hardware,

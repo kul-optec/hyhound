@@ -6,3 +6,4 @@ CMakeUserPresets.json
 *.svg
 hyh*.json
 ocp*.json
+conan-recipes

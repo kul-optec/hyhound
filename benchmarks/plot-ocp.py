@@ -3,6 +3,7 @@ import json
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 
 filename = "ocp.json"
@@ -24,17 +25,17 @@ df = df_runs.aggregate([stat, "min", "max"])
 
 # Extract the ny parameter for the x-axis
 df["run_name"] = df.index
-df["ny"] = df["run_name"].str.extract(r"/ny:(\d+)(?:/|$)").astype(int)
+df["prcnt"] = df["run_name"].str.extract(r"/prcnt:(\d+)(?:/|$)").astype(float)
 # Extract the name
 df["func_name"] = df["run_name"].apply(lambda x: x.split("/", 1)[0])
-df = df.sort_values(by=["func_name", "ny"])
+df = df.sort_values(by=["func_name", "prcnt"])
 df["cpu_usage"] = df["cpu_time"][stat] / df["real_time"][stat]
 del df["run_name"]
 print(df)
 functions = df["func_name"].unique()
 # Prepare data for plotting
-nys = df["ny"].drop_duplicates()
-ny = np.unique(nys)
+prcnts = df["prcnt"].drop_duplicates()
+prcnt = np.unique(prcnts)
 unit = data["benchmarks"][0]["time_unit"]
 
 # Plotting options
@@ -43,16 +44,6 @@ plot_opts = {
         label="Factor (Schur)",
         linestyle="--",
         color="tab:blue",
-        marker="x",
-        markersize=4,
-        alpha=0.8,
-        linewidth=0.8,
-    ),
-    "bm_solve_schur": dict(
-        label="Solve (Schur)",
-        linestyle="--",
-        color="tab:orange",
-        marker="none",
         alpha=0.8,
         linewidth=0.8,
     ),
@@ -69,15 +60,6 @@ plot_opts = {
         label="Factor (Riccati)",
         linestyle="-",
         color="tab:blue",
-        marker=".",
-        markersize=7,
-        mfc="white",
-    ),
-    "bm_solve_riccati": dict(
-        label="Solve (Riccati)",
-        linestyle="-",
-        color="tab:orange",
-        marker="none",
     ),
     "bm_update_riccati": dict(
         label="Update (Riccati)",
@@ -95,18 +77,31 @@ for function, opts in plot_opts.items():
     if function_df.empty:
         continue
     print(function)
-    ax.plot(function_df["ny"], 1e-3 * function_df[metric][stat].array, **opts)
-    ax.fill_between(
-        function_df["ny"],
-        1e-3 * function_df[metric]["min"].array,
-        1e-3 * function_df[metric]["max"].array,
-        **{k: v for k, v in opts.items() if k in {"color"}},
-        alpha=0.25
-    )
+    if function_df["prcnt"].notna().any():
+        ax.plot(function_df["prcnt"], 1e-3 * function_df[metric][stat].array, **opts)
+        ax.fill_between(
+            function_df["prcnt"],
+            1e-3 * function_df[metric]["min"].array,
+            1e-3 * function_df[metric]["max"].array,
+            **{k: v for k, v in opts.items() if k in {"color"}},
+            alpha=0.25
+        )
+    else:
+        xs = [0, max(prcnt) + 1]
+        ax.plot(xs, [1e-3 * function_df[metric][stat].item()] * 2, **opts)
+        ax.fill_between(
+            xs,
+            [1e-3 * function_df[metric]["min"].item()] * 2,
+            [1e-3 * function_df[metric]["max"].item()] * 2,
+            **{k: v for k, v in opts.items() if k in {"color"}},
+            alpha=0.25
+        )
 ax.legend(loc="upper left")
-ax.set_title("OCP factorization, solution and update run times")
-ax.set_xlabel("Number of inequality constraints $n_c$")
+ax.set_title("OCP factorization and update run times")
+ax.set_xlim(0, max(prcnt) + 0.99)
+ax.set_xlabel("Percentage of changing inequality constraints")
 ax.set_ylabel(r"Run time [$\mu\mathrm{s}$]")
+ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.0f}%"))
 assert unit == "ns"
 ax.set_ylim(0, None)
 plt.savefig(filename + ".timings.pdf")
