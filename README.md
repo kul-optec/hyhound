@@ -120,3 +120,26 @@ for the full factorization (serial).
 | Double precision | Single precision |
 |:---:|:---:|
 | ![](images/hyh-avx512f-double-16.json.gflops.svg) | ![](images/hyh-avx512f-float-16.json.gflops.svg) |
+
+## Optimal control benchmarks
+
+Factorization and factorization updates of problems with optimal control
+structure, as described in sections IV and V of the paper.
+
+### Large problems
+
+| $N=20,\quad n_x=240,\quad n_u=80,\quad n_c=240$ |
+|:---:|
+| ![](images/ocp-240.json.timings.svg) |
+
+### Medium-sized problems
+
+| $N=20,\quad n_x=24,\quad n_u=8,\quad n_c=24$ |
+|:---:|
+| ![](images/ocp.json.timings.svg) |
+
+### Small problems
+
+| $N=20,\quad n_x=6,\quad n_u=2,\quad n_c=6$ |
+|:---:|
+| ![](images/ocp-6.json.timings.svg) |

@@ -14,7 +14,9 @@ auto generate_ocp() {
     std::mt19937 rng{321};
     std::normal_distribution<real_t> nrml{0, 10};
 
-    OCPDataRiccati ocp{.N = 20, .nx = 24, .nu = 8, .ny = 24};
+    // OCPDataRiccati ocp{.N = 20, .nx = 240, .nu = 80, .ny = 240}; // large
+    OCPDataRiccati ocp{.N = 20, .nx = 24, .nu = 8, .ny = 24}; // medium
+    // OCPDataRiccati ocp{.N = 20, .nx = 6, .nu = 2, .ny = 6}; // small
     ocp.init_random(123);
 
     mat Σ = mat::Zero(ocp.ny, ocp.N + 1);
