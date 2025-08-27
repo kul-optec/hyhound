@@ -35,5 +35,7 @@ jobs:
         -o \&:with_ocp=True
         -o \&:with_benchmarks=True
         -o \&:shared=${{ matrix.link == 'shared' && 'True' || 'False' }}
+        -c '&:tools.cmake.cmaketoolchain:extra_variables*={"CMAKE_C_COMPILER_LAUNCHER": "sccache"}'
+        -c '&:tools.cmake.cmaketoolchain:extra_variables*={"CMAKE_CXX_COMPILER_LAUNCHER": "sccache"}'
 
     - run: conan cache clean
