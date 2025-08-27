@@ -21,5 +21,5 @@ tools.build:compiler_executables*={"c": "clang-18", "cpp": "clang++-18", "fortra
 tools.cmake.cmaketoolchain:generator=Ninja Multi-Config
 tools.build:exelinkflags+=["-flto=auto", "-static-libstdc++"]
 tools.build:sharedlinkflags+=["-flto=auto", "-static-libstdc++"]
-tools.build:exelinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]
-tools.build:sharedlinkflags+=["-fuse-ld=mold", "-B$MOLD_ROOT"]
+tools.build:exelinkflags+=["-fuse-ld=mold", "-B$ENV{MOLD_ROOT}"]
+tools.build:sharedlinkflags+=["-fuse-ld=mold", "-B$ENV{MOLD_ROOT}"]
