@@ -1,3 +1,6 @@
+[![arXiv Preprint](https://img.shields.io/badge/arXiv-Preprint-b31b1b)](https://arxiv.org/abs/2503.15372v1)
+[![CI: Linux](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml/badge.svg)](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml)
+
 # hyhound
 
 **Hy**perbolic **Ho**useholder transformations for **U**p- a**n**d **D**owndating Cholesky factorizations.
@@ -18,9 +21,29 @@ When $m \ll n$, this results in a considerable speedup over full factorization,
 enabling efficient low-rank updates of Cholesky factorizations, for use in e.g.
 iterative algorithms for numerical optimization.
 
+Additionally, hyhound includes efficient routines for updating factorizations
+of the Riccati recursion for optimal control problems.
+
+## Preprint
+
+The paper describing the algorithms in this repository can be found on arXiv: <https://arxiv.org/abs/2503.15372v1>
+
+```bibtex
+@misc{pas_blocked_2025,
+	title = {Blocked {Cholesky} factorization updates of the {Riccati} recursion using hyperbolic {Householder} transformations},
+	url = {http://arxiv.org/abs/2503.15372},
+	doi = {10.48550/arXiv.2503.15372},
+	publisher = {arXiv},
+	author = {Pas, Pieter and Patrinos, Panagiotis},
+	month = mar,
+	year = {2025},
+	note = {Accepted for publication in the Proceedings of CDC 2025}
+}
+```
+
 ## Building hyhound from source (Linux)
 
-Requirements: [Conan](https://conan.io/) (2.12.2), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
+Requirements: [Conan](https://conan.io/) (2.19.1), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
 
 If this is your first time using Conan, create a default profile for your system:
 ```sh
