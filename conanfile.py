@@ -59,7 +59,7 @@ class HyhoundRecipe(ConanFile):
 
     def requirements(self):
         self.requires(
-            "guanaqo/1.0.0-alpha.16", transitive_headers=True, transitive_libs=True
+            "guanaqo/1.0.0-alpha.17", transitive_headers=True, transitive_libs=True
         )
         if self.options.with_ocp:
             self.requires("eigen/3.4.0", transitive_headers=True)
