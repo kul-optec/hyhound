@@ -25,3 +25,9 @@ using index_t = @HYHOUND_DENSE_INDEX_TYPE@;
 #ifndef HYHOUND_WITH_OCP
 #cmakedefine01 HYHOUND_WITH_OCP
 #endif
+#ifndef HYHOUND_WITH_DOUBLE
+#cmakedefine01 HYHOUND_WITH_DOUBLE
+#endif
+#ifndef HYHOUND_WITH_FLOAT
+#cmakedefine01 HYHOUND_WITH_FLOAT
+#endif

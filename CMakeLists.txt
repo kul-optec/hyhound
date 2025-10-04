@@ -7,6 +7,16 @@ project(hyhound
     LANGUAGES CXX
 )
 include(CTest)
+set(PY_VERSION_SUFFIX "")
+
+# Make sure that the Python and CMake versions match
+set(PY_FULL_VERSION ${PROJECT_VERSION}${PY_VERSION_SUFFIX})
+if (DEFINED PY_BUILD_CMAKE_PROJECT_VERSION)
+    if (NOT "${PY_BUILD_CMAKE_PROJECT_VERSION}" MATCHES "^${PY_FULL_VERSION}$")
+        message(FATAL_ERROR "Version number does not match "
+                             "(${PY_BUILD_CMAKE_PROJECT_VERSION} - ${PY_FULL_VERSION}).")
+    endif()
+endif()
 
 # Options
 include(CMakeDependentOption)
@@ -28,6 +38,8 @@ option(HYHOUND_WITH_OCP
     "Build the OCP solvers" Off)
 option(HYHOUND_WITH_BENCHMARKS
     "Build the benchmarks" Off)
+option(HYHOUND_WITH_PYTHON
+    "Build the Python interface" Off)
 # Developer options
 option(HYHOUND_WARNINGS_AS_ERRORS
     "Enable -Werror or /WX" Off)
@@ -89,4 +101,9 @@ endif()
 # Benchmarks
 if (HYHOUND_WITH_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+# Python interface
+if (HYHOUND_WITH_PYTHON)
+    add_subdirectory(python)
 endif()

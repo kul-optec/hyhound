@@ -12,7 +12,7 @@ class HyhoundRecipe(ConanFile):
     version = "1.0.1"
 
     # Optional metadata
-    license = "LGPLv3"
+    license = "LGPL-3.0-or-later"
     author = "Pieter P <pieter.p.dev@outlook.com>"
     url = "https://github.com/kul-optec/hyhound"
     description = "Hyperbolic Householder transformations for Cholesky factorization up- and downdates."
@@ -24,16 +24,19 @@ class HyhoundRecipe(ConanFile):
     bool_hyhound_options = {
         "with_ocp": False,
         "with_benchmarks": False,
+        "with_python": False,
     }
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
         "real_type": ["double;float", "float;double", "double", "float"],
+        "with_conan_python": [True, False],
     } | {k: [True, False] for k in bool_hyhound_options}
     default_options = {
         "shared": False,
         "fPIC": True,
         "real_type": "double;float",
+        "with_conan_python": False,
     } | bool_hyhound_options
 
     # Sources are located in the same place as this recipe, copy them to the recipe
@@ -69,6 +72,10 @@ class HyhoundRecipe(ConanFile):
             self.test_requires("eigen/3.4.0")
         if self.options.with_benchmarks:
             self.requires("benchmark/1.9.4")
+        if self.options.with_python:
+            self.requires("nanobind/2.9.2")
+            if self.options.with_conan_python:
+                self.requires("tttapa-python-dev/3.13.7")
 
     def build_requirements(self):
         self.test_requires("gtest/1.17.0")

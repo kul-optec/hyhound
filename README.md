@@ -1,5 +1,6 @@
 [![arXiv Preprint](https://img.shields.io/badge/arXiv-Preprint-b31b1b)](https://arxiv.org/abs/2503.15372v1)
 [![CI: Linux](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml/badge.svg)](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/hyhound?label=PyPI&logo=python)](https://pypi.org/project/hyhound)
 
 # hyhound
 

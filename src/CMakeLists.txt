@@ -5,6 +5,14 @@ find_package(guanaqo REQUIRED)
 # ------------------------------------------------------------------------------
 add_library(config INTERFACE)
 list(GET HYHOUND_DENSE_REAL_TYPE 0 HYHOUND_DENSE_REAL_TYPE_0)
+set(HYHOUND_WITH_DOUBLE Off)
+set(HYHOUND_WITH_FLOAT Off)
+if ("double" IN_LIST HYHOUND_DENSE_REAL_TYPE)
+    set(HYHOUND_WITH_DOUBLE On)
+endif()
+if ("float" IN_LIST HYHOUND_DENSE_REAL_TYPE)
+    set(HYHOUND_WITH_FLOAT On)
+endif()
 configure_file("config.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/config/include/hyhound/config.hpp" @ONLY)
 target_sources(config INTERFACE FILE_SET headers TYPE HEADERS

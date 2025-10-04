@@ -7,3 +7,5 @@ CMakeUserPresets.json
 hyh*.json
 ocp*.json
 conan-recipes
+__pycache__
+dist
