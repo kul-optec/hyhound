@@ -9,7 +9,7 @@ from conan.tools.scm import Git
 
 class HyhoundRecipe(ConanFile):
     name = "hyhound"
-    version = "1.0.1"
+    version = "1.0.2-alpha.1"
 
     # Optional metadata
     license = "LGPL-3.0-or-later"

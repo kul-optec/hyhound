@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.24...4.1)
 set(CMAKE_CXX_SCAN_FOR_MODULES Off)
 project(hyhound
-    VERSION 1.0.1
+    VERSION 1.0.2
     DESCRIPTION "Hyperbolic Householder transformations for Cholesky factorization up- and downdates"
     HOMEPAGE_URL "https://github.com/kul-optec/hyhound"
     LANGUAGES CXX
 )
 include(CTest)
-set(PY_VERSION_SUFFIX "")
+set(PY_VERSION_SUFFIX "a1")
 
 # Make sure that the Python and CMake versions match
 set(PY_FULL_VERSION ${PROJECT_VERSION}${PY_VERSION_SUFFIX})
