@@ -24,6 +24,7 @@ esac
 # Package and output directories
 pkg_dir="${3:-.}"
 out_dir="${4:-dist}"
+with_stubs=${5:-false}
 
 # Create Conan profile to inject the appropriate Python development files
 python_profile="$PWD/conan-python.cross.profile"
@@ -61,6 +62,7 @@ for i in "${!archs[@]}"; do
 done
 cat <<- EOF >> "$pbc_config"
 conan.1.args+=["-o&:with_python_dispatch=True"]
+conan.1.cmake.options.WITH_PY_STUBS=$with_stubs
 conan.1.cmake.install_components+=["python_nanobind", "python_stubs"]
 EOF
 
