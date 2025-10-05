@@ -25,7 +25,7 @@ class HyhoundRecipe(ConanFile):
         "with_ocp": False,
         "with_benchmarks": False,
         "with_python": False,
-        "with_python_dispatch": True,
+        "with_python_dispatch": False,
     }
     options = {
         "shared": [True, False],

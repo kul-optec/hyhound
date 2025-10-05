@@ -15,14 +15,22 @@ find_package(nanobind REQUIRED CONFIG)
 
 # Determine whether we're doing a stable or a free-threaded build
 set(USE_SABI)
-set(NANOBIND_TARGET "")
-if (DEFINED PY_BUILD_CMAKE_PACKAGE_USE_SABI)
+set(NANOBIND_TARGET "nanobind-hyhound")
+if (PY_BUILD_CMAKE_PACKAGE_ABI_TAG MATCHES "(^|;)cp([0-9dmu]+)t($|;)")
+    message(STATUS "Free-threaded build")
+    string(APPEND NANOBIND_TARGET "-ft")
+elseif (DEFINED PY_BUILD_CMAKE_PACKAGE_USE_SABI)
+    message(STATUS "Stable ABI build (${PY_BUILD_CMAKE_PACKAGE_USE_SABI})")
     string(APPEND NANOBIND_TARGET "-abi3")
     set(USE_SABI USE_SABI ${PY_BUILD_CMAKE_PACKAGE_USE_SABI})
 endif()
-if (PY_BUILD_CMAKE_PACKAGE_ABI_TAG MATCHES "(^|;)cp([0-9dmu]+)t($|;)")
-    string(APPEND NANOBIND_TARGET "-ft")
-endif()
+
+# Build the nanobind library
+nanobind_build_library(${NANOBIND_TARGET})
+install(TARGETS ${NANOBIND_TARGET}
+        EXCLUDE_FROM_ALL
+        COMPONENT python_nanobind
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME})
 
 # Configure the dynamic loading paths to locate the nanobind libraries.
 function(hyhound_rpath_origin tgt)
@@ -33,34 +41,27 @@ function(hyhound_rpath_origin tgt)
     endif()
 endfunction()
 
-# Build the nanobind library and the Python extension
-nanobind_build_library(${NANOBIND_TARGET})
-set_target_properties(${NANOBIND_TARGET} PROPERTIES OUTPUT_NAME nanobind-hyhound)
+# Configure common options for Python extension modules
+function(hyhound_configure_python_ext tgt)
+    target_link_libraries(${tgt} PRIVATE ${NANOBIND_TARGET})
+    hyhound_rpath_origin(${tgt})
+    nanobind_compile_options(${tgt})
+    nanobind_link_options(${tgt})
+    hyhound_configure_visibility(${tgt})
+    target_compile_definitions(${tgt} PRIVATE
+        MODULE_NAME=$<TARGET_FILE_BASE_NAME:${tgt}>
+        VERSION_INFO="${PY_FULL_VERSION}")
+endfunction()
+
+# Build the Python extension
 Python_add_library(_hyhound MODULE ${USE_SABI} "hyhound.py.cpp")
-target_link_libraries(_hyhound PRIVATE ${NANOBIND_TARGET})
-hyhound_rpath_origin(_hyhound)
-nanobind_compile_options(_hyhound)
-nanobind_link_options(_hyhound)
-target_compile_definitions(_hyhound PRIVATE
-    MODULE_NAME=$<TARGET_FILE_BASE_NAME:_hyhound>
-    VERSION_INFO="${PY_FULL_VERSION}"
-)
+hyhound_configure_python_ext(_hyhound)
 target_link_libraries(_hyhound PRIVATE hyhound::hyhound)
 set_target_properties(_hyhound PROPERTIES
     RELEASE_POSTFIX "${HYHOUND_PYTHON_POSTFIX}"
     DEBUG_POSTFIX "${HYHOUND_PYTHON_POSTFIX}"
     RELWITHDEBINFO_POSTFIX "${HYHOUND_PYTHON_POSTFIX}"
-    MINSIZEREL_POSTFIX "${HYHOUND_PYTHON_POSTFIX}"
-)
-
-# Hide all symbols by default (including external libraries on Linux)
-hyhound_configure_visibility(_hyhound)
-
-# Install nanobind
-install(TARGETS ${NANOBIND_TARGET}
-        EXCLUDE_FROM_ALL
-        COMPONENT python_nanobind
-        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME})
+    MINSIZEREL_POSTFIX "${HYHOUND_PYTHON_POSTFIX}")
 
 # Install the Python module
 install(TARGETS _hyhound
@@ -71,14 +72,7 @@ install(TARGETS _hyhound
 # Build the dispatch library
 if (HYHOUND_WITH_PYTHON_DISPATCH)
     Python_add_library(_dispatch MODULE ${USE_SABI} "dispatch.py.cpp")
-    target_link_libraries(_dispatch PRIVATE ${NANOBIND_TARGET})
-    hyhound_rpath_origin(_dispatch)
-    nanobind_compile_options(_dispatch)
-    nanobind_link_options(_dispatch)
-    target_compile_definitions(_dispatch PRIVATE
-        MODULE_NAME=$<TARGET_FILE_BASE_NAME:_dispatch>
-        VERSION_INFO="${PY_FULL_VERSION}"
-    )
+    hyhound_configure_python_ext(_dispatch)
     find_package(CpuFeatures REQUIRED)
     target_link_libraries(_dispatch PRIVATE CpuFeatures::cpu_features)
     hyhound_configure_visibility(_dispatch)
@@ -105,6 +99,5 @@ if (WITH_PY_STUBS)
         OUTPUT "${PY_BUILD_CMAKE_IMPORT_NAME}/_hyhound.pyi"
         PYTHON_PATH "${PY_BUILD_CMAKE_IMPORT_NAME}"
         EXCLUDE_FROM_ALL
-        VERBOSE
-    )
+        VERBOSE)
 endif()
