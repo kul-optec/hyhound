@@ -89,7 +89,9 @@ class HyhoundRecipe(ConanFile):
             self.options.rm_safe("fPIC")
 
     def configure(self):
-        self.options["guanaqo/*"].with_blas = True
+        with_tests = not self.conf.get("tools.build:skip_test", default=False)
+        if self.options.with_benchmarks or self.options.with_ocp or with_tests:
+            self.options["guanaqo/*"].with_blas = True
 
     def layout(self):
         cmake_layout(self)
