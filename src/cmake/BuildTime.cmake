@@ -6,13 +6,13 @@ if (EXISTS "${COMMIT_TXT}")
 else()
     execute_process(
         COMMAND git log -1 --format=%H
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../..
         OUTPUT_VARIABLE HYHOUND_COMMIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET)
     execute_process(
-        COMMAND git status . --short --no-branch --untracked-files=no
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        COMMAND git status --short --no-branch --untracked-files=no
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../..
         OUTPUT_VARIABLE HYHOUND_GIT_STATUS
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET)
