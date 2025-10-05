@@ -1,4 +1,5 @@
 build
+.venv*
 .*cache
 CMakeUserPresets.json
 *.pdf
@@ -9,3 +10,7 @@ ocp*.json
 conan-recipes
 __pycache__
 dist
+python/hyhound/_hyhound.pyi
+*.cross.profile
+*.cross.pbc
+*.local.pbc

@@ -1,17 +1,22 @@
-name: setup-conan
-description: Install Python, Conan, CMake, Ninja, Sccache, Conan recipes
+name: Setup Conan
+description: >
+  Installs Python, Conan, py-build-cmake, pybind11-stubgen and sccache.
+  It initializes the default Conan profile using conan profile detect, sets
+  up compiler caching using sccache, configures caching of Conan dependencies,
+  and adds Conan recipes for cross-compilation and Python development files.
 inputs:
   python-version:
     required: false
     default: '3.13'
-    description: >
-      The Python version to use for the build, e.g. '3.13'.
+    description: The Python version to use for the build, e.g. '3.13'.
   conan-home:
     required: false
     default: ${{ github.workspace }}/.conan2
+    description: Selects the Conan home folder, $CONAN_HOME. Will be cached.
   cache-key:
     required: false
     default: generic
+    description: String to include in cache keys, to differentiate workflows.
 
 runs:
   using: composite
@@ -25,8 +30,8 @@ runs:
   - name: Install Python dependencies
     shell: bash
     run: >
-      pip install -U
-      pip build conan==2.19 cmake ninja
+      pip install -U pip build
+      conan~=2.20.1 'py-build-cmake~=0.6.0a2'
 
   - name: Configure sccache version
     shell: bash
@@ -51,3 +56,4 @@ runs:
       recipes="${{ github.workspace }}/tttapa-conan-recipes"
       git clone https://github.com/tttapa/conan-recipes "$recipes"
       conan remote add tttapa-conan-recipes "$recipes" --force
+      conan config install scripts/ci/conan-profiles/settings_user.yml
