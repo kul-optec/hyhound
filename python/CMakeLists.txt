@@ -71,7 +71,7 @@ install(TARGETS _hyhound
 
 # Build the dispatch library
 if (HYHOUND_WITH_PYTHON_DISPATCH)
-    Python_add_library(_dispatch MODULE ${USE_SABI} "dispatch.py.cpp")
+    Python_add_library(_dispatch MODULE WITH_SOABI ${USE_SABI} "dispatch.py.cpp")
     hyhound_configure_python_ext(_dispatch)
     find_package(CpuFeatures REQUIRED)
     target_link_libraries(_dispatch PRIVATE CpuFeatures::cpu_features)
