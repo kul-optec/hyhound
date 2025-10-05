@@ -23,10 +23,15 @@ elseif (DEFINED PY_BUILD_CMAKE_PACKAGE_USE_SABI)
     message(STATUS "Stable ABI build (${PY_BUILD_CMAKE_PACKAGE_USE_SABI})")
     string(APPEND NANOBIND_TARGET "-abi3")
     set(USE_SABI USE_SABI ${PY_BUILD_CMAKE_PACKAGE_USE_SABI})
+    set(USE_LIMITED_API ${PY_BUILD_CMAKE_PACKAGE_LIMITED_API})
 endif()
 
 # Build the nanobind library
 nanobind_build_library(${NANOBIND_TARGET})
+if (USE_LIMITED_API)
+    target_compile_definitions(${NANOBIND_TARGET} PRIVATE
+        Py_LIMITED_API=${USE_LIMITED_API})
+endif()
 install(TARGETS ${NANOBIND_TARGET}
         EXCLUDE_FROM_ALL
         COMPONENT python_nanobind
