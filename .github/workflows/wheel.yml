@@ -118,7 +118,7 @@ jobs:
 
       - name: Build Wheels
         run: |
-          for v in 3.9 3.10 3.11 3.12 3.13 3.14; do
+          for v in 3.9 3.10 3.11 3.12; do  # https://github.com/wjakob/nanobind/issues/1183
             ./scripts/ci/build-linux-cross.sh $v ${{ matrix.host }} sdist dist
           done
 
