@@ -54,7 +54,7 @@ function(hyhound_configure_python_ext tgt)
 endfunction()
 
 # Build the Python extension
-Python_add_library(_hyhound MODULE ${USE_SABI} "hyhound.py.cpp")
+Python_add_library(_hyhound MODULE WITH_SOABI ${USE_SABI} "hyhound.py.cpp")
 hyhound_configure_python_ext(_hyhound)
 target_link_libraries(_hyhound PRIVATE hyhound::hyhound)
 set_target_properties(_hyhound PROPERTIES
