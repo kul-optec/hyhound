@@ -56,7 +56,7 @@ minimum_version = "4.1"
 source_path = "."
 args = ["-Wdev"]
 build_type = "Release"
-install_components = ["python_modules", "python_stubs"]
+install_components = ["python_modules", "python_nanobind", "python_stubs"]
 [tool.py-build-cmake.conan]
 args = [
     "--build=missing",

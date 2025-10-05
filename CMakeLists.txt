@@ -40,6 +40,8 @@ option(HYHOUND_WITH_BENCHMARKS
     "Build the benchmarks" Off)
 option(HYHOUND_WITH_PYTHON
     "Build the Python interface" Off)
+option(HYHOUND_WITH_PYTHON_DISPATCH
+    "Build the AVX2/AVX-512 dispatch logic for the Python interface" Off)
 # Developer options
 option(HYHOUND_WARNINGS_AS_ERRORS
     "Enable -Werror or /WX" Off)

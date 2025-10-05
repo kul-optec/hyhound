@@ -25,6 +25,7 @@ class HyhoundRecipe(ConanFile):
         "with_ocp": False,
         "with_benchmarks": False,
         "with_python": False,
+        "with_python_dispatch": True,
     }
     options = {
         "shared": [True, False],
@@ -74,6 +75,8 @@ class HyhoundRecipe(ConanFile):
             self.requires("benchmark/1.9.4")
         if self.options.with_python:
             self.requires("nanobind/2.9.2")
+            if self.options.with_python_dispatch:
+                self.requires("cpu_features/0.10.1")
             if self.options.with_conan_python:
                 self.requires("tttapa-python-dev/3.13.7")
 
