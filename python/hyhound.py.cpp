@@ -76,17 +76,24 @@ void register_module(nb::module_ &m) {
             hyhound::update_cholesky(view(L), view(A), hyhound::Update{});
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
-        "Cholesky factorization update. Overwrites its arguments.\n\n"
-        "L̃L̃ᵀ + ÃÃᵀ = LLᵀ + AAᵀ\n\n"
-        ":param L: k × n matrix, lower-trapezoidal, Fortran order. On entry, "
-        "the original Cholesky factor L. "
-        "On exit, it contains the updated Cholesky factor L̃.\n"
-        ":param A: k × m matrix, rectangular, Fortran order. On entry, the "
-        "update matrix A. "
-        "On exit, it contains the k-n bottom rows of the remaining update "
-        "matrix Ã (the top n rows of Ã are implicitly zero). The top n rows of "
-        "this matrix are overwritten by the Householder reflectors used during "
-        "the update, and are generally not useful.\n");
+        R"doc(
+Cholesky factorization update. Overwrites its arguments.
+
+L̃L̃ᵀ + ÃÃᵀ = LLᵀ + AAᵀ
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal, Fortran order
+    On entry, the original Cholesky factor L.
+    On exit, contains the updated Cholesky factor L̃.
+
+A : (k × m), rectangular, Fortran order
+    On entry, the update matrix A.
+    On exit, contains the k-n bottom rows of the remaining update matrix Ã
+    (the top n rows of Ã are implicitly zero).
+    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+)doc");
+
     m.def(
         "downdate_cholesky_inplace",
         [](matrix_cm L, matrix_cm A) {
@@ -94,17 +101,24 @@ void register_module(nb::module_ &m) {
             hyhound::update_cholesky(view(L), view(A), hyhound::Downdate{});
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
-        "Cholesky factorization downdate. Overwrites its arguments.\n\n"
-        "L̃L̃ᵀ - ÃÃᵀ = LLᵀ - AAᵀ\n\n"
-        ":param L: k × n matrix, lower-trapezoidal, Fortran order. On entry, "
-        "the original Cholesky factor L. "
-        "On exit, it contains the updated Cholesky factor L̃.\n"
-        ":param A: k × m matrix, rectangular, Fortran order. On entry, the "
-        "downdate matrix A. "
-        "On exit, it contains the k-n bottom rows of the remaining downdate "
-        "matrix Ã (the top n rows of Ã are implicitly zero). The top n rows of "
-        "this matrix are overwritten by the Householder reflectors used during "
-        "the downdate, and are generally not useful.\n");
+        R"doc(
+Cholesky factorization downdate. Overwrites its arguments.
+
+L̃L̃ᵀ - ÃÃᵀ = LLᵀ - AAᵀ
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal, Fortran order
+    On entry, the original Cholesky factor L.
+    On exit, contains the updated Cholesky factor L̃.
+
+A : (k × m), rectangular, Fortran order
+    On entry, the downdate matrix A.
+    On exit, contains the k-n bottom rows of the remaining downdate matrix Ã
+    (the top n rows of Ã are implicitly zero).
+    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+)doc");
+
     m.def(
         "update_cholesky_sign_inplace",
         [](matrix_cm L, matrix_cm A, c_vector signs) {
@@ -118,21 +132,29 @@ void register_module(nb::module_ &m) {
             hyhound::update_cholesky(view(L), view(A), sgn);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "signs"_a,
-        "Cholesky factorization update. Overwrites its arguments.\n\n"
-        "L̃L̃ᵀ + ÃSÃᵀ = LLᵀ + ASAᵀ, "
-        "with ``S = np.diag(np.copysign(np.ones(m), signs)``, and where "
-        "``signs`` contains ±0.\n\n"
-        ":param L: k × n matrix, lower-trapezoidal, Fortran order. On entry, "
-        "the original Cholesky factor L. "
-        "On exit, it contains the updated Cholesky factor L̃.\n"
-        ":param A: k × m matrix, rectangular, Fortran order. On entry, the "
-        "update matrix A. "
-        "On exit, it contains the k-n bottom rows of the remaining update "
-        "matrix Ã (the top n rows of Ã are implicitly zero). The top n rows of "
-        "this matrix are overwritten by the Householder reflectors used during "
-        "the update, and are generally not useful.\n"
-        ":param signs: m-vector. Signs that determine whether a column of A is "
-        "added (+0) or removed (-0). Values other than ±0 are not allowed.");
+        R"doc(
+Cholesky factorization update with signed columns. Overwrites its arguments.
+
+L̃L̃ᵀ + ÃSÃᵀ = LLᵀ + ASAᵀ,
+where S = np.diag(np.copysign(np.ones(m), signs)) and signs contains ±0.
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal, Fortran order
+    On entry, the original Cholesky factor L.
+    On exit, contains the updated Cholesky factor L̃.
+
+A : (k × m), rectangular, Fortran order
+    On entry, the update matrix A.
+    On exit, contains the k-n bottom rows of the remaining update matrix Ã
+    (the top n rows of Ã are implicitly zero).
+    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+
+signs : m-vector
+    Signs that determine whether a column of A is added (+0) or removed (-0).
+    Values other than ±0 are not allowed.
+)doc");
+
     m.def(
         "update_cholesky_diag_inplace",
         [](matrix_cm L, matrix_cm A, c_vector diag) {
@@ -144,20 +166,28 @@ void register_module(nb::module_ &m) {
             hyhound::update_cholesky(view(L), view(A), d);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "diag"_a,
-        "Cholesky factorization update. Overwrites its arguments.\n\n"
-        "L̃L̃ᵀ + ÃDÃᵀ = LLᵀ + ADAᵀ, "
-        "with ``D = np.diag(diag)``.\n\n"
-        ":param L: k × n matrix, lower-trapezoidal, Fortran order. On entry, "
-        "the original Cholesky factor L. "
-        "On exit, it contains the updated Cholesky factor L̃.\n"
-        ":param A: k × m matrix, rectangular, Fortran order. On entry, the "
-        "update matrix A. "
-        "On exit, it contains the k-n bottom rows of the remaining update "
-        "matrix Ã (the top n rows of Ã are implicitly zero). The top n rows of "
-        "this matrix are overwritten by the Householder reflectors used during "
-        "the update, and are generally not useful.\n"
-        ":param diag: m-vector. Scale factors corresponding to the columns of "
-        "A.\n");
+        R"doc(
+Cholesky factorization update with diagonal scaling. Overwrites its arguments.
+
+L̃L̃ᵀ + ÃDÃᵀ = LLᵀ + ADAᵀ,
+where D = np.diag(diag).
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal, Fortran order
+    On entry, the original Cholesky factor L.
+    On exit, contains the updated Cholesky factor L̃.
+
+A : (k × m), rectangular, Fortran order
+    On entry, the update matrix A.
+    On exit, contains the k-n bottom rows of the remaining update matrix Ã
+    (the top n rows of Ã are implicitly zero).
+    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+
+diag : m-vector
+    Scale factors corresponding to the columns of A.
+)doc");
+
     // Returning copies
     m.def(
         "update_cholesky",
@@ -168,15 +198,30 @@ void register_module(nb::module_ &m) {
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a,
-        "Cholesky factorization update. Returns updated copies.\n\n"
-        "L̃L̃ᵀ + ÃÃᵀ = LLᵀ + AAᵀ\n\n"
-        ":param L: k × n matrix, lower-trapezoidal. The original Cholesky "
-        "factor.\n"
-        ":param A: k × m matrix, rectangular. The update matrix.\n"
-        ":return: Tuple (L̃, Ã). L̃ is the updated Cholesky factor. Ã contains "
-        "the k-n bottom rows of the remaining update matrix. "
-        "The top n rows of Ã are overwritten by Householder reflectors and are "
-        "generally not useful.\n");
+        R"doc(
+Cholesky factorization update. Returns updated copies.
+
+L̃L̃ᵀ + ÃÃᵀ = LLᵀ + AAᵀ
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal
+    The original Cholesky factor.
+
+A : (k × m), rectangular
+    The update matrix.
+
+Returns
+-------
+L̃ : (k × n)
+    The updated Cholesky factor.
+
+A_rem : (k × m)
+    Contains the k-n bottom rows of the remaining update matrix Ã.
+    The top n rows of Ã are zero (not stored explicitly).
+    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+)doc");
+
     m.def(
         "downdate_cholesky",
         [](c_matrix L, c_matrix A) {
@@ -186,15 +231,30 @@ void register_module(nb::module_ &m) {
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a,
-        "Cholesky factorization downdate. Returns updated copies.\n\n"
-        "L̃L̃ᵀ - ÃÃᵀ = LLᵀ - AAᵀ\n\n"
-        ":param L: k × n matrix, lower-trapezoidal. The original Cholesky "
-        "factor.\n"
-        ":param A: k × m matrix, rectangular. The downdate matrix.\n"
-        ":return: Tuple (L̃, Ã). L̃ is the updated Cholesky factor. Ã contains "
-        "the k-n bottom rows of the remaining update matrix. "
-        "The top n rows of Ã are overwritten by Householder reflectors and are "
-        "generally not useful.\n");
+        R"doc(
+Cholesky factorization downdate. Returns updated copies.
+
+L̃L̃ᵀ - ÃÃᵀ = LLᵀ - AAᵀ
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal
+    The original Cholesky factor.
+
+A : (k × m), rectangular
+    The downdate matrix.
+
+Returns
+-------
+L̃ : (k × n)
+    The updated Cholesky factor.
+
+A_rem : (k × m)
+    Contains the k-n bottom rows of the remaining downdate matrix Ã.
+    The top n rows of Ã are zero (not stored explicitly).
+    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+)doc");
+
     m.def(
         "update_cholesky_sign",
         [](c_matrix L, c_matrix A, c_vector signs) {
@@ -210,20 +270,35 @@ void register_module(nb::module_ &m) {
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "signs"_a,
-        "Cholesky factorization update. Returns updated copies.\n\n"
-        "L̃L̃ᵀ + ÃSÃᵀ = LLᵀ + ASAᵀ, "
-        "with ``S = np.diag(np.copysign(np.ones(m), signs))``, and where "
-        "``signs`` contains ±0.\n\n"
-        ":param L: k × n matrix, lower-trapezoidal. The original Cholesky "
-        "factor.\n"
-        ":param A: k × m matrix, rectangular. The update matrix.\n"
-        ":param signs: m-vector. Signs that determine whether a column of A is "
-        "added (+0) or removed (-0). "
-        "Values other than ±0 are not allowed.\n"
-        ":return: Tuple (L̃, Ã). L̃ is the updated Cholesky factor. Ã contains "
-        "the k-n bottom rows of the remaining update matrix. "
-        "The top n rows of Ã are overwritten by Householder reflectors and are "
-        "generally not useful.\n");
+        R"doc(
+Cholesky factorization update with signed columns. Returns updated copies.
+
+L̃L̃ᵀ + ÃSÃᵀ = LLᵀ + ASAᵀ,
+where S = np.diag(np.copysign(np.ones(m), signs)) and signs contains ±0.
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal
+    The original Cholesky factor.
+
+A : (k × m), rectangular
+    The update matrix.
+
+signs : m-vector
+    Signs that determine whether a column of A is added (+0) or removed (-0).
+    Values other than ±0 are not allowed.
+
+Returns
+-------
+L̃ : (k × n)
+    The updated Cholesky factor.
+
+A_rem : (k × m)
+    Contains the k-n bottom rows of the remaining update matrix Ã.
+    The top n rows of Ã are zero (not stored explicitly).
+    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+)doc");
+
     m.def(
         "update_cholesky_diag",
         [](c_matrix L, c_matrix A, c_vector diag) {
@@ -237,18 +312,33 @@ void register_module(nb::module_ &m) {
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "diag"_a,
-        "Cholesky factorization update. Returns updated copies.\n\n"
-        "L̃L̃ᵀ + ÃDÃᵀ = LLᵀ + ADAᵀ, "
-        "with ``D = np.diag(diag)``.\n\n"
-        ":param L: k × n matrix, lower-trapezoidal. The original Cholesky "
-        "factor.\n"
-        ":param A: k × m matrix, rectangular. The update matrix.\n"
-        ":param diag: m-vector. Scale factors corresponding to the columns of "
-        "A.\n"
-        ":return: Tuple (L̃, Ã). L̃ is the updated Cholesky factor. Ã contains "
-        "the k-n bottom rows of the remaining update matrix. "
-        "The top n rows of Ã are overwritten by Householder reflectors and are "
-        "generally not useful.\n");
+        R"doc(
+Cholesky factorization update with diagonal scaling. Returns updated copies.
+
+L̃L̃ᵀ + ÃDÃᵀ = LLᵀ + ADAᵀ,
+where D = np.diag(diag).
+
+Parameters
+----------
+L : (k × n), lower-trapezoidal
+    The original Cholesky factor.
+
+A : (k × m), rectangular
+    The update matrix.
+
+diag : m-vector
+    Scale factors corresponding to the columns of A.
+
+Returns
+-------
+L̃ : (k × n)
+    The updated Cholesky factor.
+
+A_rem : (k × m)
+    Contains the k-n bottom rows of the remaining update matrix Ã.
+    The top n rows of Ã are zero (not stored explicitly).
+    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+)doc");
 }
 
 } // namespace
