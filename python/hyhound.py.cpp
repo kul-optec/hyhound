@@ -10,6 +10,14 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
+namespace hyhound::py {
+template <class T, class UpDown>
+void update_cholesky(MatrixView<T> L, MatrixView<T> A, const UpDown &signs) {
+    nb::gil_scoped_release release;
+    hyhound::update_cholesky(L, A, signs);
+}
+} // namespace hyhound::py
+
 namespace {
 
 template <class... Args>
@@ -73,7 +81,7 @@ void register_module(nb::module_ &m) {
         "update_cholesky_inplace",
         [](matrix_cm L, matrix_cm A) {
             check_dim(L, A);
-            hyhound::update_cholesky(view(L), view(A), hyhound::Update{});
+            hyhound::py::update_cholesky(view(L), view(A), hyhound::Update{});
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -98,7 +106,7 @@ A : (k × m), rectangular, Fortran order
         "downdate_cholesky_inplace",
         [](matrix_cm L, matrix_cm A) {
             check_dim(L, A);
-            hyhound::update_cholesky(view(L), view(A), hyhound::Downdate{});
+            hyhound::py::update_cholesky(view(L), view(A), hyhound::Downdate{});
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -129,7 +137,7 @@ A : (k × m), rectangular, Fortran order
             if (!std::ranges::all_of(signs_span, [](T t) { return t == T{}; }))
                 throw std::invalid_argument("signs should be +/- zero");
             hyhound::UpDowndate<T> sgn{signs_span};
-            hyhound::update_cholesky(view(L), view(A), sgn);
+            hyhound::py::update_cholesky(view(L), view(A), sgn);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "signs"_a,
         R"doc(
@@ -163,7 +171,7 @@ signs : m-vector
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
-            hyhound::update_cholesky(view(L), view(A), d);
+            hyhound::py::update_cholesky(view(L), view(A), d);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "diag"_a,
         R"doc(
@@ -194,7 +202,7 @@ diag : m-vector
         [](c_matrix L, c_matrix A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
-            hyhound::update_cholesky(view(L̃), view(Ã), hyhound::Update{});
+            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Update{});
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a,
@@ -227,7 +235,7 @@ A_rem : (k × m)
         [](c_matrix L, c_matrix A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
-            hyhound::update_cholesky(view(L̃), view(Ã), hyhound::Downdate{});
+            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Downdate{});
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a,
@@ -266,7 +274,7 @@ A_rem : (k × m)
                 throw std::invalid_argument("signs should be +/- zero");
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::UpDowndate<T> sgn{signs_span};
-            hyhound::update_cholesky(view(L̃), view(Ã), sgn);
+            hyhound::py::update_cholesky(view(L̃), view(Ã), sgn);
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "signs"_a,
@@ -308,7 +316,7 @@ A_rem : (k × m)
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
-            hyhound::update_cholesky(view(L̃), view(Ã), d);
+            hyhound::py::update_cholesky(view(L̃), view(Ã), d);
             return nb::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "diag"_a,
