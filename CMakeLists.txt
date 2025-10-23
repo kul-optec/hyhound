@@ -7,7 +7,7 @@ project(hyhound
     LANGUAGES CXX
 )
 include(CTest)
-set(PY_VERSION_SUFFIX "a1")
+set(PY_VERSION_SUFFIX "a2")
 
 # Make sure that the Python and CMake versions match
 set(PY_FULL_VERSION ${PROJECT_VERSION}${PY_VERSION_SUFFIX})
