@@ -12,9 +12,11 @@ template <class T, Config<T> Conf, class UpDown>
 void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
                        std::type_identity_t<MatrixView<const T>> Ws,
                        std::type_identity_t<MatrixView<const T>> B) {
-    constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
-    constexpr index_t N       = Conf.num_blocks_r;
-    constexpr bool do_packing = Conf.enable_packing;
+    static constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
+    static constexpr index_t N       = Conf.num_blocks_r;
+    static constexpr bool do_packing = Conf.enable_packing;
+    using Rt                         = index_constant<R>;
+    using St                         = index_constant<S>;
     constexpr micro_kernels::householder::Config uConf{
         .block_size_r        = R,
         .block_size_s        = S,
@@ -53,14 +55,15 @@ void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
     if constexpr (do_packing)
         for (index_t i = 0; i < N; ++i)
             B_pack[i] = &B_pack_storage[R * B.cols * i];
-    auto pack_Bd = [&](index_t k) -> micro_kernels::matrix_accessor<T> {
+    auto pack_Bd = [&](index_t k,
+                       index_t nk = Rt{}) -> micro_kernels::matrix_accessor<T> {
         if constexpr (do_packing) {
             MatrixView<T> Bd{
-                {.data = B_pack[(k / R) % N], .rows = R, .cols = B.cols}};
-            Bd = B.middle_rows(k, R);
+                {.data = B_pack[(k / R) % N], .rows = nk, .cols = B.cols}};
+            Bd = B.middle_rows(k, nk);
             return Bd;
         }
-        return B.middle_rows(k, R);
+        return B.middle_rows(k, nk);
     };
 
     // Process all diagonal blocks (in multiples of NR, except the last).
@@ -78,7 +81,7 @@ void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
         }
         // Process all rows below the diagonal block (in multiples of S).
         foreach_chunked(
-            0, L.rows, std::integral_constant<index_t, S>(),
+            0, L.rows, St{},
             [&](index_t i) {
                 auto As = A_.middle_rows(i);
                 // Process columns
@@ -105,18 +108,18 @@ void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
             LoopDir::Forward);
     }
     index_t rem_k = L.cols - k;
-    assert(rem_k < R);
     if (rem_k > 0) {
         if (N != 1)
             throw std::logic_error("Not yet implemented");
-        auto Bd = B_.middle_rows(k); // TODO: pack?
+        assert(rem_k < R);
+        auto Bd = pack_Bd(k, rem_k);
         // Load W
         for (index_t c = 0; c < rem_k; ++c)
             for (index_t r = 0; r <= c; ++r)
                 W[0](r, c) = Ws_(r, k + c);
         // Process all rows below the diagonal block (in multiples of S).
         foreach_chunked_merged(
-            0, L.rows, std::integral_constant<index_t, S>(),
+            0, L.rows, St{},
             [&](index_t i, index_t rem_i) {
                 auto As = A_.middle_rows(i);
                 // Process columns

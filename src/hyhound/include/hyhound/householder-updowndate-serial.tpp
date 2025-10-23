@@ -10,14 +10,16 @@ namespace hyhound::inline serial {
 template <class T, Config<T> Conf, class UpDown>
 void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
                      MatrixView<T> Ws) {
-    constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
-    constexpr index_t N       = Conf.num_blocks_r;
-    constexpr bool do_packing = Conf.enable_packing;
-    constexpr micro_kernels::householder::Config uConf{
+    static constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
+    static constexpr index_t N       = Conf.num_blocks_r;
+    static constexpr bool do_packing = Conf.enable_packing;
+    using Rt                         = index_constant<R>;
+    using St                         = index_constant<S>;
+    static constexpr micro_kernels::householder::Config uConf{
         .block_size_r        = R,
         .block_size_s        = S,
         .prefetch_dist_col_a = Conf.prefetch_dist_col_a};
-    constexpr micro_kernels::householder::Config uConfR{
+    static constexpr micro_kernels::householder::Config uConfR{
         .block_size_r        = R,
         .block_size_s        = R,
         .prefetch_dist_col_a = Conf.prefetch_dist_col_a};
@@ -60,20 +62,22 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
     if constexpr (do_packing)
         for (index_t i = 0; i < N; ++i)
             A_pack[i] = &A_pack_storage[R * A.cols * i];
-    auto pack_Ad = [&](index_t k) -> micro_kernels::mut_matrix_accessor<T> {
+    auto pack_Ad = [&](index_t k,
+                       index_t nk =
+                           Rt{}) -> micro_kernels::mut_matrix_accessor<T> {
         if constexpr (do_packing) {
             MatrixView<T> Ad{
-                {.data = A_pack[(k / R) % N], .rows = R, .cols = A.cols}};
-            Ad = A.middle_rows(k, R);
+                {.data = A_pack[(k / R) % N], .rows = nk, .cols = A.cols}};
+            Ad = A.middle_rows(k, nk);
             return Ad;
         }
-        return A.middle_rows(k, R);
+        return A.middle_rows(k, nk);
     };
-    auto unpack_Ad = [&](index_t k) {
+    auto unpack_Ad = [&](index_t k, index_t nk = Rt{}) {
         if constexpr (do_packing) {
             MatrixView<const T> Ad{
-                {.data = A_pack[(k / R) % N], .rows = R, .cols = A.cols}};
-            A.middle_rows(k, R) = Ad;
+                {.data = A_pack[(k / R) % N], .rows = nk, .cols = A.cols}};
+            A.middle_rows(k, nk) = Ad;
         }
     };
 
@@ -104,7 +108,7 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
         }
         // Process all rows below the diagonal block (in multiples of S).
         foreach_chunked(
-            k + R * N, L.rows, std::integral_constant<index_t, S>(),
+            k + R * N, L.rows, St{},
             [&](index_t i) {
                 auto As = A_.middle_rows(i);
                 // Process columns
@@ -131,11 +135,11 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
             LoopDir::Forward);
     }
     index_t rem_k = L.cols - k;
-    assert(rem_k < R);
     if (rem_k > 0) {
         if (N != 1)
             throw std::logic_error("Not yet implemented");
-        auto Ad = pack_Ad(k);
+        assert(rem_k < R);
+        auto Ad = pack_Ad(k, rem_k);
         auto Ld = L_.block(k, k);
         if (L.rows == L.cols && Ws.rows < R) {
             full_microkernel_lut[rem_k - 1](A.cols, Ld, Ad, signs);
@@ -146,11 +150,11 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
                 for (index_t c = 0; c < rem_k; ++c)
                     for (index_t r = 0; r <= c; ++r)
                         Ws_(r, k + c) = W[0](r, c);
-                unpack_Ad(k);
+                unpack_Ad(k, rem_k);
             }
             // Process all rows below the diagonal block (in multiples of S).
             foreach_chunked_merged(
-                k + rem_k, L.rows, std::integral_constant<index_t, S>(),
+                k + rem_k, L.rows, St{},
                 [&](index_t i, index_t rem_i) {
                     auto As = A_.middle_rows(i);
                     // Process columns
