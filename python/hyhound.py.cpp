@@ -80,6 +80,17 @@ auto empty(size_t rows, size_t cols) {
     };
 }
 
+template <class... Args>
+auto zero_top_rows(nb::ndarray<Args...> &array, size_t n) {
+    using T     = typename nb::ndarray<Args...>::Scalar;
+    auto v      = array.view();
+    size_t rows = v.shape(0), cols = v.shape(1);
+    assert(n <= rows);
+    for (size_t c = 0; c < cols; ++c)
+        for (size_t r = 0; r < n; ++r)
+            v(r, c) = T{};
+}
+
 template <class... ArgsL, class... ArgsA>
 void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A) {
     if (L.ndim() != 2)
@@ -125,6 +136,7 @@ void register_module(nb::module_ &m) {
         [](matrix_cm L, matrix_cm A) {
             check_dim(L, A);
             hyhound::py::update_cholesky(view(L), view(A), hyhound::Update{});
+            zero_top_rows(A, L.shape(1));
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -141,8 +153,7 @@ L : (k × n), lower-trapezoidal, Fortran order
 A : (k × m), rectangular, Fortran order
     On entry, the update matrix A.
     On exit, contains the k-n bottom rows of the remaining update matrix Ã
-    (the top n rows of Ã are implicitly zero).
-    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+    (the top n rows of Ã are zero).
 )doc");
 
     m.def(
@@ -150,6 +161,7 @@ A : (k × m), rectangular, Fortran order
         [](matrix_cm L, matrix_cm A) {
             check_dim(L, A);
             hyhound::py::update_cholesky(view(L), view(A), hyhound::Downdate{});
+            zero_top_rows(A, L.shape(1));
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -166,8 +178,7 @@ L : (k × n), lower-trapezoidal, Fortran order
 A : (k × m), rectangular, Fortran order
     On entry, the downdate matrix A.
     On exit, contains the k-n bottom rows of the remaining downdate matrix Ã
-    (the top n rows of Ã are implicitly zero).
-    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+    (the top n rows of Ã are zero).
 )doc");
 
     m.def(
@@ -181,6 +192,7 @@ A : (k × m), rectangular, Fortran order
                 throw std::invalid_argument("signs should be +/- zero");
             hyhound::UpDowndate<T> sgn{signs_span};
             hyhound::py::update_cholesky(view(L), view(A), sgn);
+            zero_top_rows(A, L.shape(1));
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "signs"_a,
         R"doc(
@@ -198,8 +210,7 @@ L : (k × n), lower-trapezoidal, Fortran order
 A : (k × m), rectangular, Fortran order
     On entry, the update matrix A.
     On exit, contains the k-n bottom rows of the remaining update matrix Ã
-    (the top n rows of Ã are implicitly zero).
-    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+    (the top n rows of Ã are zero).
 
 signs : m-vector
     Signs that determine whether a column of A is added (+0) or removed (-0).
@@ -215,6 +226,7 @@ signs : m-vector
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
             hyhound::py::update_cholesky(view(L), view(A), d);
+            zero_top_rows(A, L.shape(1));
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "diag"_a,
         R"doc(
@@ -232,8 +244,7 @@ L : (k × n), lower-trapezoidal, Fortran order
 A : (k × m), rectangular, Fortran order
     On entry, the update matrix A.
     On exit, contains the k-n bottom rows of the remaining update matrix Ã
-    (the top n rows of Ã are implicitly zero).
-    The top n rows of A are overwritten by Householder reflectors and are generally not useful.
+    (the top n rows of Ã are zero).
 
 diag : m-vector
     Scale factors corresponding to the columns of A.
