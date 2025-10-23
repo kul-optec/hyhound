@@ -4,9 +4,10 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
-#include <format>
+#include <nanobind/stl/tuple.h>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 
 namespace nb = nanobind;
@@ -131,11 +132,6 @@ void register_module(nb::module_ &m) {
         nb::ndarray<T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
     using c_matrix_cm =
         nb::ndarray<const T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
-    constexpr std::string_view type_name =
-        std::is_same_v<T, double>  ? "numpy.float64"
-        : std::is_same_v<T, float> ? "numpy.float32"
-                                   : "typing.Any";
-    const auto array_type = std::format("numpy.typing.NDArray[{}]", type_name);
     // In-place
     m.def(
         "update_cholesky_inplace",
@@ -265,13 +261,9 @@ diag : m-vector
             auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
             hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Update{},
                                          view(W));
-            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
+            return std::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a,
-        nb::sig(std::format("def update_cholesky(L: {0}, A: {0}) "
-                            "-> typing.Tuple[{0}, {0}, {0}]",
-                            array_type)
-                    .c_str()),
         R"doc(
 Cholesky factorization update. Returns updated copies.
 
@@ -310,13 +302,9 @@ W : (r × n)
             auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
             hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Downdate{},
                                          view(W));
-            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
+            return std::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a,
-        nb::sig(std::format("def downdate_cholesky(L: {0}, A: {0}) "
-                            "-> typing.Tuple[{0}, {0}, {0}]",
-                            array_type)
-                    .c_str()),
         R"doc(
 Cholesky factorization downdate. Returns updated copies.
 
@@ -360,13 +348,9 @@ W : (r × n)
             auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
             hyhound::UpDowndate<T> sgn{signs_span};
             hyhound::py::update_cholesky(view(L̃), view(Ã), sgn, view(W));
-            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
+            return std::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a, "signs"_a,
-        nb::sig(std::format("def update_cholesky_sign(L: {0}, A: {0}, "
-                            "signs: {0}) -> typing.Tuple[{0}, {0}, {0}]",
-                            array_type)
-                    .c_str()),
         R"doc(
 Cholesky factorization update with signed columns. Returns updated copies.
 
@@ -413,13 +397,9 @@ W : (r × n)
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
             hyhound::py::update_cholesky(view(L̃), view(Ã), d, view(W));
-            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
+            return std::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a, "diag"_a,
-        nb::sig(std::format("def update_cholesky_diag(L: {0}, A: {0}, "
-                            "diag: {0}) -> typing.Tuple[{0}, {0}, {0}]",
-                            array_type)
-                    .c_str()),
         R"doc(
 Cholesky factorization update with diagonal scaling. Returns updated copies.
 
@@ -462,14 +442,9 @@ W : (r × n)
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::py::apply_householder(view(L̃), view(Ã), hyhound::Update{},
                                            view(W), view(B));
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "W"_a, "B"_a,
-        nb::sig(
-            std::format("def update_apply_householder(L: {0}, A: {0}, W: {0}, "
-                        "B: {0}) -> typing.Tuple[{0}, {0}]",
-                        array_type)
-                .c_str()),
         R"doc(
 Apply a block Householder transformation generated during a Cholesky
 factorization update. Returns updated copies.
@@ -509,13 +484,9 @@ L̃ : (l × n)
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::py::apply_householder(
                 view(L̃), view(Ã), hyhound::Downdate{}, view(W), view(B));
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "W"_a, "B"_a,
-        nb::sig(std::format("def downdate_apply_householder(L: {0}, A: {0}, "
-                            "W: {0}, B: {0}) -> typing.Tuple[{0}, {0}]",
-                            array_type)
-                    .c_str()),
         R"doc(
 Apply a block Householder transformation generated during a Cholesky
 factorization downdate. Returns updated copies.
@@ -563,14 +534,9 @@ L̃ : (l × n)
             hyhound::UpDowndate<T> sgn{signs_span};
             hyhound::py::apply_householder(view(L̃), view(Ã), sgn, view(W),
                                            view(B));
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "signs"_a, "W"_a, "B"_a,
-        nb::sig(
-            std::format("def update_apply_householder_sign(L: {0}, A: {0}, "
-                        "signs: {0}, W: {0}, B: {0}) -> typing.Tuple[{0}, {0}]",
-                        array_type)
-                .c_str()),
         R"doc(
 Apply a block Householder transformation generated during a Cholesky
 factorization update with signed columns. Returns updated copies.
@@ -620,14 +586,9 @@ L̃ : (l × n)
                 std::span{diag.data(), diag.shape(0)}};
             hyhound::py::apply_householder(view(L̃), view(Ã), d, view(W),
                                            view(B));
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "diag"_a, "W"_a, "B"_a,
-        nb::sig(
-            std::format("def update_apply_householder_diag(L: {0}, A: {0}, "
-                        "diag: {0}, W: {0}, B: {0}) -> typing.Tuple[{0}, {0}]",
-                        array_type)
-                .c_str()),
         R"doc(
 Apply a block Householder transformation generated during a Cholesky
 factorization update with diagonal scaling. Returns updated copies.
