@@ -64,6 +64,9 @@ template <class T, index_t R = MaxSizeR>
 struct matrix_W_storage {
     alignas(W_align<T, R>) T W[W_stride<T, R> * R]{};
     constexpr operator mut_W_accessor<T, R>() { return {W}; }
+    T &operator()(index_t r, index_t c) {
+        return mut_W_accessor<T, R>{W}(r, c);
+    }
 };
 
 template <index_t R, class T, class UpDown>

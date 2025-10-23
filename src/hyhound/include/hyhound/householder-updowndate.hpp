@@ -5,6 +5,8 @@
 
 #include <guanaqo/mat-view.hpp>
 
+#include <type_traits>
+
 namespace hyhound {
 
 namespace detail {
@@ -64,7 +66,12 @@ using MatrixView = guanaqo::MatrixView<T, index_t>;
 
 inline namespace serial {
 template <class T, Config<T> Conf = {}, class UpDown>
-void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs);
+void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
+                     MatrixView<T> Ws = MatrixView<T>{{.rows = 0}});
+template <class T, Config<T> Conf = {}, class UpDown>
+void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
+                       std::type_identity_t<MatrixView<const T>> Ws,
+                       std::type_identity_t<MatrixView<const T>> B);
 } // namespace serial
 
 } // namespace hyhound

@@ -6,15 +6,26 @@
 #include <nanobind/ndarray.h>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace hyhound::py {
+template <class T>
+constexpr hyhound::Config<T> config{};
 template <class T, class UpDown>
-void update_cholesky(MatrixView<T> L, MatrixView<T> A, const UpDown &signs) {
+void update_cholesky(MatrixView<T> L, MatrixView<T> A, const UpDown &signs,
+                     MatrixView<T> Ws = MatrixView<T>{{.rows = 0}}) {
     nb::gil_scoped_release release;
-    hyhound::update_cholesky(L, A, signs);
+    hyhound::update_cholesky<T, config<T>>(L, A, signs, Ws);
+}
+template <class T, class UpDown>
+void apply_householder(MatrixView<T> L, MatrixView<T> A, const UpDown &signs,
+                       std::type_identity_t<MatrixView<const T>> Ws,
+                       std::type_identity_t<MatrixView<const T>> B) {
+    nb::gil_scoped_release release;
+    hyhound::apply_householder<T, config<T>>(L, A, signs, Ws, B);
 }
 } // namespace hyhound::py
 
@@ -56,6 +67,19 @@ auto copy(const nb::ndarray<Args...> &array) {
     };
 }
 
+template <class T>
+auto empty(size_t rows, size_t cols) {
+    std::unique_ptr<T[]> data{new T[rows * cols]()};
+    auto deleter  = [](void *p) noexcept { delete[] static_cast<T *>(p); };
+    auto data_ptr = data.get();
+    return nb::ndarray<nb::numpy, T, nb::ndim<2>, nb::f_contig>{
+        data_ptr,
+        {rows, cols},
+        nb::capsule{data.release(), deleter},
+        {1, static_cast<int64_t>(rows)},
+    };
+}
+
 template <class... ArgsL, class... ArgsA>
 void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A) {
     if (L.ndim() != 2)
@@ -69,6 +93,23 @@ void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A) {
         throw std::invalid_argument("A.shape[0] should match L.shape[0]");
 }
 
+template <class... ArgsL, class... ArgsA, class... ArgsW, class... ArgsB>
+void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A,
+               const nb::ndarray<ArgsW...> &W, const nb::ndarray<ArgsB...> &B) {
+    check_dim(L, A);
+    using T = std::remove_const_t<typename nb::ndarray<ArgsW...>::Scalar>;
+    static constexpr auto R = hyhound::py::config<T>.block_size_r;
+    if (W.shape(0) != R)
+        throw std::invalid_argument("W.shape[0] should be " +
+                                    std::to_string(R));
+    if (W.shape(1) != L.shape(1))
+        throw std::invalid_argument("W.shape[1] should match L.shape[1]");
+    if (B.shape(0) != L.shape(1))
+        throw std::invalid_argument("B.shape[0] should match L.shape[1]");
+    if (B.shape(1) != A.shape(1))
+        throw std::invalid_argument("B.shape[1] should match A.shape[1]");
+}
+
 template <class T>
 void register_module(nb::module_ &m) {
     using c_matrix = nb::ndarray<const T, nb::ndim<2>, nb::device::cpu>;
@@ -76,6 +117,8 @@ void register_module(nb::module_ &m) {
         nb::ndarray<const T, nb::ndim<1>, nb::device::cpu, nb::any_contig>;
     using matrix_cm =
         nb::ndarray<T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
+    using c_matrix_cm =
+        nb::ndarray<const T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
     // In-place
     m.def(
         "update_cholesky_inplace",
@@ -202,8 +245,10 @@ diag : m-vector
         [](c_matrix L, c_matrix A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
-            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Update{});
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
+            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Update{},
+                                         view(W));
+            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a,
         R"doc(
@@ -227,7 +272,13 @@ L̃ : (k × n)
 A_rem : (k × m)
     Contains the k-n bottom rows of the remaining update matrix Ã.
     The top n rows of Ã are zero (not stored explicitly).
-    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+    The top n rows of A_rem contain Householder reflectors.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update. Together with the top n rows of A_rem,
+    this can be used to apply the block Householder transformation to other matrices.
+    The number of rows depends on the block size and is architecture-dependent.
 )doc");
 
     m.def(
@@ -235,8 +286,10 @@ A_rem : (k × m)
         [](c_matrix L, c_matrix A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
-            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Downdate{});
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
+            hyhound::py::update_cholesky(view(L̃), view(Ã), hyhound::Downdate{},
+                                         view(W));
+            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a,
         R"doc(
@@ -260,7 +313,13 @@ L̃ : (k × n)
 A_rem : (k × m)
     Contains the k-n bottom rows of the remaining downdate matrix Ã.
     The top n rows of Ã are zero (not stored explicitly).
-    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+    The top n rows of A_rem contain Householder reflectors.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update. Together with the top n rows of A_rem,
+    this can be used to apply the block Householder transformation to other matrices.
+    The number of rows depends on the block size and is architecture-dependent.
 )doc");
 
     m.def(
@@ -273,9 +332,10 @@ A_rem : (k × m)
             if (!std::ranges::all_of(signs_span, [](T t) { return t == T{}; }))
                 throw std::invalid_argument("signs should be +/- zero");
             auto L̃ = copy(L), Ã = copy(A);
+            auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
             hyhound::UpDowndate<T> sgn{signs_span};
-            hyhound::py::update_cholesky(view(L̃), view(Ã), sgn);
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            hyhound::py::update_cholesky(view(L̃), view(Ã), sgn, view(W));
+            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a, "signs"_a,
         R"doc(
@@ -304,7 +364,13 @@ L̃ : (k × n)
 A_rem : (k × m)
     Contains the k-n bottom rows of the remaining update matrix Ã.
     The top n rows of Ã are zero (not stored explicitly).
-    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+    The top n rows of A_rem contain Householder reflectors.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update. Together with the top n rows of A_rem,
+    this can be used to apply the block Householder transformation to other matrices.
+    The number of rows depends on the block size and is architecture-dependent.
 )doc");
 
     m.def(
@@ -314,10 +380,11 @@ A_rem : (k × m)
             if (A.shape(1) != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
             auto L̃ = copy(L), Ã = copy(A);
+            auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
-            hyhound::py::update_cholesky(view(L̃), view(Ã), d);
-            return nb::make_tuple(std::move(L̃), std::move(Ã));
+            hyhound::py::update_cholesky(view(L̃), view(Ã), d, view(W));
+            return nb::make_tuple(std::move(L̃), std::move(Ã), std::move(W));
         },
         "L"_a, "A"_a, "diag"_a,
         R"doc(
@@ -345,7 +412,205 @@ L̃ : (k × n)
 A_rem : (k × m)
     Contains the k-n bottom rows of the remaining update matrix Ã.
     The top n rows of Ã are zero (not stored explicitly).
-    The top n rows of A_rem contain Householder reflectors and are generally not useful.
+    The top n rows of A_rem contain Householder reflectors.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update. Together with the top n rows of A_rem,
+    this can be used to apply the block Householder transformation to other matrices.
+    The number of rows depends on the block size and is architecture-dependent.
+)doc");
+
+    // Applying Householder transformations
+    m.def(
+        "update_apply_householder",
+        [](c_matrix L, c_matrix A, c_matrix_cm W, c_matrix_cm B) {
+            check_dim(L, A, W, B);
+            auto L̃ = copy(L), Ã = copy(A);
+            hyhound::py::apply_householder(view(L̃), view(Ã), hyhound::Update{},
+                                           view(W), view(B));
+            return nb::make_tuple(std::move(L̃), std::move(Ã));
+        },
+        "L"_a, "A"_a, "W"_a, "B"_a,
+        R"doc(
+Apply a block Householder transformation generated during a Cholesky
+factorization update. Returns updated copies.
+
+(L̃ Ã) = (L A) Q
+
+where Q is the block Householder transformation represented by W and B.
+
+Parameters
+----------
+L : (l × n), rectangular
+    Matrix to apply the transformation to.
+
+A : (l × m), rectangular
+    Matrix to apply the transformation to.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update.
+
+B : (k × m), rectangular
+    The Householder reflector vectors generated during the Cholesky
+    factorization update.
+
+Returns
+-------
+L̃ : (l × n)
+    The updated matrix L.
+
+Ã : (l × m)
+    The updated matrix A.
+)doc");
+    m.def(
+        "downdate_apply_householder",
+        [](c_matrix L, c_matrix A, c_matrix_cm W, c_matrix_cm B) {
+            check_dim(L, A, W, B);
+            auto L̃ = copy(L), Ã = copy(A);
+            hyhound::py::apply_householder(
+                view(L̃), view(Ã), hyhound::Downdate{}, view(W), view(B));
+            return nb::make_tuple(std::move(L̃), std::move(Ã));
+        },
+        "L"_a, "A"_a, "W"_a, "B"_a,
+        R"doc(
+Apply a block Householder transformation generated during a Cholesky
+factorization downdate. Returns updated copies.
+
+(L̃ Ã) = (L A) Q
+
+where Q is the block Householder transformation represented by W and B.
+
+Parameters
+----------
+L : (l × n), rectangular
+    Matrix to apply the transformation to.
+
+A : (l × m), rectangular
+    Matrix to apply the transformation to.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization downdate.
+
+B : (k × m), rectangular
+    The Householder reflector vectors generated during the Cholesky
+    factorization downdate.
+
+Returns
+-------
+L̃ : (l × n)
+    The updated matrix L.
+
+Ã : (l × m)
+    The updated matrix A.
+)doc");
+
+    m.def(
+        "update_apply_householder_sign",
+        [](c_matrix L, c_matrix A, c_vector signs, c_matrix_cm W,
+           c_matrix_cm B) {
+            check_dim(L, A, W, B);
+            if (A.shape(1) != signs.size())
+                throw std::invalid_argument("len(signs) should be A.shape[1]");
+            std::span signs_span{signs.data(), signs.shape(0)};
+            if (!std::ranges::all_of(signs_span, [](T t) { return t == T{}; }))
+                throw std::invalid_argument("signs should be +/- zero");
+            auto L̃ = copy(L), Ã = copy(A);
+            hyhound::UpDowndate<T> sgn{signs_span};
+            hyhound::py::apply_householder(view(L̃), view(Ã), sgn, view(W),
+                                           view(B));
+            return nb::make_tuple(std::move(L̃), std::move(Ã));
+        },
+        "L"_a, "A"_a, "signs"_a, "W"_a, "B"_a,
+        R"doc(
+Apply a block Householder transformation generated during a Cholesky
+factorization update with signed columns. Returns updated copies.
+
+(L̃ Ã) = (L A) Q
+
+where Q is the block Householder transformation represented by W, B and signs.
+
+Parameters
+----------
+L : (l × n), rectangular
+    Matrix to apply the transformation to.
+
+A : (l × m), rectangular
+    Matrix to apply the transformation to.
+
+signs : m-vector
+    Signs that determine whether a column of A was added (+0) or removed (-0).
+    Values other than ±0 are not allowed.
+    
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update.
+
+B : (k × m), rectangular
+    The Householder reflector vectors generated during the Cholesky
+    factorization update.
+
+Returns
+-------
+L̃ : (l × n)
+    The updated matrix L.
+
+Ã : (l × m)
+    The updated matrix A.
+)doc");
+
+    m.def(
+        "update_apply_householder_diag",
+        [](c_matrix L, c_matrix A, c_vector diag, c_matrix_cm W,
+           c_matrix_cm B) {
+            check_dim(L, A, W, B);
+            if (A.shape(1) != diag.size())
+                throw std::invalid_argument("len(diag) should be A.shape[1]");
+            auto L̃ = copy(L), Ã = copy(A);
+            hyhound::DiagonalUpDowndate<T> d{
+                std::span{diag.data(), diag.shape(0)}};
+            hyhound::py::apply_householder(view(L̃), view(Ã), d, view(W),
+                                           view(B));
+            return nb::make_tuple(std::move(L̃), std::move(Ã));
+        },
+        "L"_a, "A"_a, "diag"_a, "W"_a, "B"_a,
+        R"doc(
+Apply a block Householder transformation generated during a Cholesky
+factorization update with diagonal scaling. Returns updated copies.
+
+(L̃ Ã) = (L A) Q
+
+where Q is the block Householder transformation represented by W, B and diag.
+
+Parameters
+----------
+L : (l × n), rectangular
+    Matrix to apply the transformation to.
+
+A : (l × m), rectangular
+    Matrix to apply the transformation to.
+
+diag : m-vector
+    Scale factors corresponding to the columns of A used when generating the
+    Householder transformation.
+
+W : (r × n)
+    The upper triangular Householder representations generated during the
+    Cholesky factorization update.
+
+B : (k × m), rectangular
+    The Householder reflector vectors generated during the Cholesky
+    factorization update.
+
+Returns
+-------
+L̃ : (l × n)
+    The updated matrix L.
+
+Ã : (l × m)
+    The updated matrix A.
 )doc");
 }
 

@@ -4,12 +4,12 @@
 #include <hyhound/householder-updowndate.hpp>
 #include <hyhound/loop.hpp>
 #include <hyhound/lut.hpp>
-#include <type_traits>
 
 namespace hyhound::inline serial {
 
 template <class T, Config<T> Conf, class UpDown>
-void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
+void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
+                     MatrixView<T> Ws) {
     constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
     constexpr index_t N       = Conf.num_blocks_r;
     constexpr bool do_packing = Conf.enable_packing;
@@ -23,6 +23,7 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
         .prefetch_dist_col_a = Conf.prefetch_dist_col_a};
     assert(L.rows >= L.cols);
     assert(L.rows == A.rows);
+    assert(Ws.rows == 0 || Ws.cols == L.cols);
     constinit static auto full_microkernel_lut =
         make_1d_lut<R>([]<index_t NR>(index_constant<NR>) {
             return updowndate_full<NR + 1, T, UpDown>;
@@ -41,7 +42,7 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
         });
 
     // Leaner accessors (without unnecessary dimensions and strides).
-    micro_kernels::mut_matrix_accessor<T> L_{L}, A_{A};
+    micro_kernels::mut_matrix_accessor<T> L_{L}, A_{A}, Ws_{Ws};
     // Workspace storage for W (upper triangular Householder representation)
     micro_kernels::householder::matrix_W_storage<T> W[N];
 
@@ -68,6 +69,13 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
         }
         return A.middle_rows(k, R);
     };
+    auto unpack_Ad = [&](index_t k) {
+        if constexpr (do_packing) {
+            MatrixView<const T> Ad{
+                {.data = A_pack[(k / R) % N], .rows = R, .cols = A.cols}};
+            A.middle_rows(k, R) = Ad;
+        }
+    };
 
     // Process all diagonal blocks (in multiples of NR, except the last).
     index_t k;
@@ -86,6 +94,13 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
             auto Ld = L_.block(k + kk, k + kk);
             // Process the diagonal block itself
             updowndate_diag<R, T, UpDown>(A.cols, W[kk / R], Ld, Ad, signs);
+            // Store W if requested
+            if (Ws.rows >= R) {
+                for (index_t c = 0; c < R; ++c)
+                    for (index_t r = 0; r <= c; ++r)
+                        Ws_(r, k + kk + c) = W[kk / R](r, c);
+                unpack_Ad(k + kk);
+            }
         }
         // Process all rows below the diagonal block (in multiples of S).
         foreach_chunked(
@@ -120,12 +135,19 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs) {
     if (rem_k > 0) {
         if (N != 1)
             throw std::logic_error("Not yet implemented");
-        auto Ad = A_.middle_rows(k); // TODO: pack?
+        auto Ad = pack_Ad(k);
         auto Ld = L_.block(k, k);
-        if (L.rows == L.cols) {
+        if (L.rows == L.cols && Ws.rows < R) {
             full_microkernel_lut[rem_k - 1](A.cols, Ld, Ad, signs);
         } else {
             diag_microkernel_lut[rem_k - 1](A.cols, W[0], Ld, Ad, signs);
+            // Store W if requested
+            if (Ws.rows >= R) {
+                for (index_t c = 0; c < rem_k; ++c)
+                    for (index_t r = 0; r <= c; ++r)
+                        Ws_(r, k + c) = W[0](r, c);
+                unpack_Ad(k);
+            }
             // Process all rows below the diagonal block (in multiples of S).
             foreach_chunked_merged(
                 k + rem_k, L.rows, std::integral_constant<index_t, S>(),
