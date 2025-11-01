@@ -10,8 +10,8 @@ namespace hyhound::inline serial {
 
 template <class T, Config<T> Conf, class UpDown>
 void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
-                       std::type_identity_t<MatrixView<const T>> Ws,
-                       std::type_identity_t<MatrixView<const T>> B) {
+                       std::type_identity_t<MatrixView<const T>> B,
+                       std::type_identity_t<MatrixView<const T>> Ws) {
     static constexpr index_t R = Conf.block_size_r, S = Conf.block_size_s;
     static constexpr index_t N       = Conf.num_blocks_r;
     static constexpr bool do_packing = Conf.enable_packing;

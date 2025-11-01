@@ -70,8 +70,8 @@ void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
                      MatrixView<T> Ws = MatrixView<T>{{.rows = 0}});
 template <class T, Config<T> Conf = {}, class UpDown>
 void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
-                       std::type_identity_t<MatrixView<const T>> Ws,
-                       std::type_identity_t<MatrixView<const T>> B);
+                       std::type_identity_t<MatrixView<const T>> B,
+                       std::type_identity_t<MatrixView<const T>> Ws);
 } // namespace serial
 
 } // namespace hyhound

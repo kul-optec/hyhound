@@ -13,10 +13,10 @@ def test_update_cholesky():
     L2, Bd, Wd = hyhound.downdate_cholesky(L̃, A)
     assert la.norm(L @ L.T - L2 @ L2.T, "fro") < 1e-12
 
-    L3, Au = hyhound.update_apply_householder(L, A, Wu, Bu)
+    L3, Au = hyhound.update_apply_householder(L, A, Bu, Wu)
     assert la.norm(Au, "fro") < 1e-11
     assert la.norm(L̃ - L3, "fro") < 1e-12
-    L4, Ad = hyhound.downdate_apply_householder(L̃, A, Wd, Bd)
+    L4, Ad = hyhound.downdate_apply_householder(L̃, A, Bd, Wd)
     assert la.norm(Ad, "fro") < 1e-11
     assert la.norm(L2 - L4, "fro") < 1e-12
 
@@ -35,10 +35,10 @@ def test_update_cholesky_tall():
     A2[:n, :] = 0
     assert la.norm(L @ L.T - L2 @ L2.T - Ã @ Ã.T + A2 @ A2.T, "fro") < 1e-12
 
-    L3, Au = hyhound.update_apply_householder(L, A, Wu, Bu)
+    L3, Au = hyhound.update_apply_householder(L, A, Bu, Wu)
     assert la.norm(Au[:n, :], "fro") < 1e-10
     assert la.norm(L̃ - L3, "fro") < 1e-11
-    L4, Ad = hyhound.downdate_apply_householder(L̃, A, Wd, Bd)
+    L4, Ad = hyhound.downdate_apply_householder(L̃, A, Bd, Wd)
     assert la.norm(Ad[:n, :], "fro") < 1e-10
     assert la.norm(L2 - L4, "fro") < 1e-11
 
@@ -66,10 +66,10 @@ def test_update_cholesky_diag():
     L2, Bd, Wd = hyhound.update_cholesky_diag(L̃, A, -d)
     assert la.norm(L @ L.T - L2 @ L2.T, "fro") < 1e-12
 
-    L3, Au = hyhound.update_apply_householder_diag(L, A, d, Wu, Bu)
+    L3, Au = hyhound.update_apply_householder_diag(L, A, d, Bu, Wu)
     assert la.norm(Au, "fro") < 1e-11
     assert la.norm(L̃ - L3, "fro") < 1e-12
-    L4, Ad = hyhound.update_apply_householder_diag(L̃, A, -d, Wd, Bd)
+    L4, Ad = hyhound.update_apply_householder_diag(L̃, A, -d, Bd, Wd)
     assert la.norm(Ad, "fro") < 1e-11
     assert la.norm(L - L4, "fro") < 1e-12
 
@@ -88,9 +88,9 @@ def test_update_cholesky_sign():
     L2, Bd, Wd = hyhound.update_cholesky_sign(L̃, A, -s)
     assert la.norm(L @ L.T - L2 @ L2.T, "fro") < 1e-12
 
-    L3, Au = hyhound.update_apply_householder_sign(L, A, s, Wu, Bu)
+    L3, Au = hyhound.update_apply_householder_sign(L, A, s, Bu, Wu)
     assert la.norm(Au, "fro") < 1e-11
     assert la.norm(L̃ - L3, "fro") < 1e-12
-    L4, Ad = hyhound.update_apply_householder_sign(L̃, A, -s, Wd, Bd)
+    L4, Ad = hyhound.update_apply_householder_sign(L̃, A, -s, Bd, Wd)
     assert la.norm(Ad, "fro") < 1e-11
     assert la.norm(L - L4, "fro") < 1e-12
