@@ -9,7 +9,7 @@ from conan.tools.scm import Git
 
 class HyhoundRecipe(ConanFile):
     name = "hyhound"
-    version = "1.0.2-alpha.2"
+    version = "1.0.2-alpha.3"
 
     # Optional metadata
     license = "LGPL-3.0-or-later"
@@ -63,7 +63,7 @@ class HyhoundRecipe(ConanFile):
 
     def requirements(self):
         self.requires(
-            "guanaqo/1.0.0-alpha.19", transitive_headers=True, transitive_libs=True
+            "guanaqo/1.0.0-alpha.20", transitive_headers=True, transitive_libs=True
         )
         if self.options.with_ocp:
             self.requires("eigen/5.0.0", transitive_headers=True)
