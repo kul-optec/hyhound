@@ -42,6 +42,22 @@ The paper describing the algorithms in this repository can be found on arXiv: <h
 }
 ```
 
+## Installation
+
+The Python interface is available on PyPI: https://pypi.org/project/hyhound
+
+```sh
+pip install hyhound
+```
+
+Currently, only Linux is supported (awaiting improved `std::simd` support in
+MSVC and Clang).
+
+## Usage
+
+See [python/test/test_update_cholesky.py](python/test/test_update_cholesky.py)
+and [test_package/src/example.cpp](test_package/src/example.cpp) for usage examples.
+
 ## Building hyhound from source (Linux)
 
 Requirements: [Conan](https://conan.io/) (2.19.1), [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html).
