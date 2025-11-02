@@ -200,10 +200,13 @@ jobs:
           path: dist
 
       - name: Install
-        run: python3 -m pip install --find-links=dist "${PACKAGE_NAME}==${PACKAGE_VERSION}"
+        run: python3 -m pip install --find-links=dist "${PACKAGE_NAME}[test]==${PACKAGE_VERSION}"
 
       - name: Import
         run: objdump -p "$(python3 -c 'import hyhound; print(hyhound._hyhound.__file__)')"
+
+      - name: Test
+        run: pytest -rP
 
   # Build for Windows and macOS using cibuildwheel.
   # Since we're not specifying any cross-compilation settings, py-build-cmake
