@@ -18,7 +18,7 @@ template <class T>
 constexpr hyhound::Config<T> config{};
 template <class T, class UpDown>
 void update_cholesky(MatrixView<T> L, MatrixView<T> A, const UpDown &signs,
-                     MatrixView<T> Ws = MatrixView<T>{{.rows = 0}}) {
+                     MatrixView<T> Ws = {{}}) {
     nb::gil_scoped_release release;
     hyhound::update_cholesky<T, config<T>>(L, A, signs, Ws);
 }

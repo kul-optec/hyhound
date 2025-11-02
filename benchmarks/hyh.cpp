@@ -141,7 +141,7 @@ struct CholeskyFixture : benchmark::Fixture {
             state.ResumeTiming();
             benchmark::DoNotOptimize(Ã.data());
             benchmark::DoNotOptimize(L̃.data());
-            hyhound::MatrixView<real_t> W{{.rows = 0}};
+            hyhound::MatrixView<real_t> W{{}};
             Func(as_view(L̃, use_index_t), as_view(Ã, use_index_t), {}, W);
             benchmark::ClobberMemory();
         }

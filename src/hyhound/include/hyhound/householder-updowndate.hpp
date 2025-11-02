@@ -46,6 +46,8 @@ struct DefaultMicroKernelSizes<double> {
 };
 } // namespace detail
 
+/// Blocking and packing parameters for the @ref update_cholesky and
+/// @ref apply_householder functions.
 template <class T>
 struct Config {
     /// Block size of the block column of L to process in the micro-kernels.
@@ -61,6 +63,9 @@ struct Config {
     bool enable_packing = true;
 };
 
+/// Non-owning view of a dense matrix
+/// (column-major storage order with unit inner stride).
+/// @tparam T   The matrix element type.
 template <class T = real_t>
 using MatrixView = guanaqo::MatrixView<T, index_t>;
 
@@ -70,13 +75,13 @@ inline namespace serial {
  * updated factorization satisfies
  * @f$ \tilde L \tilde L^\top = H + A S A^\top @f$.
  *
- * @f$ S @f$ is a diagonal matrix with the diagonal elements determined by
- * @p signs:
+ * @f$ S @f$ is a diagonal matrix with the diagonal elements determined by the
+ * @p signs parameter:
  * - If @p signs is of type @ref Update, then @f$ S = \mathrm{I} @f$;
  * - If @p signs is of type @ref Downdate, then @f$ S = -\mathrm{I} @f$;
  * - If @p signs is of type @ref UpDowndate, then @f$ S = \mathrm{diag}(s) @f$,
- *   where @f$ s = \mathrm{copysign}(1, \texttt{signs}) @f$, and where @p signs
- *   contains only the values `+0.0` and `-0.0`;
+ *   where @f$ s = \mathrm{copysign}(1, \texttt{signs.signs}) @f$, and where
+ *   `signs.signs` contains only the values `+0.0` and `-0.0`;
  * - If @p signs is of type @ref DownUpdate, then @f$ S = -\mathrm{diag}(s) @f$,
  *   where @f$ s = \mathrm{copysign}(1, \texttt{signs.signs}) @f$, and where
  *   `signs.signs` contains only the values `+0.0` and `-0.0`;
@@ -86,15 +91,14 @@ inline namespace serial {
  * If @f$ L @f$ is a tall matrix, the function also returns a matrix
  * @f$ \tilde A @f$ such that @f$ \tilde L \tilde L^\top +
  * \begin{pmatrix} 0 \\ \tilde A \end{pmatrix} S
- * \begin{pmatrix} 0 & \tilde A^\top \end{pmatrix} =
- * L \tilde L^\top + A S A^\top @f$.
+ * \begin{pmatrix} 0 & \tilde A^\top \end{pmatrix} = L L^\top + A S A^\top @f$.
  *
  * @param[in,out] L (k × n, lower trapezoidal)
  *      On input, the lower-triangular Cholesky factor @f$ L @f$ of @f$ H @f$.
  *      On output, the lower-triangular Cholesky factor @f$ \tilde L @f$ of
  *      @f$ H + A S A^\top @f$.
  * @param[in,out] A (k × m)
- *      On input, the matrix @f$ A @f $.
+ *      On input, the matrix @f$ A @f$.
  *      On output, the top n rows are overwritten, and the bottom k-n rows
  *      contain the matrix @f$ \tilde A @f$.
  * @param[in] signs
@@ -108,7 +112,7 @@ inline namespace serial {
  */
 template <class T, Config<T> Conf = {}, class UpDown>
 void update_cholesky(MatrixView<T> L, MatrixView<T> A, UpDown signs,
-                     MatrixView<T> Ws = MatrixView<T>{{.rows = 0}});
+                     MatrixView<T> Ws = {{}});
 
 /**
  * @brief Apply a block Householder transformation @f$ \breve Q @f$,
