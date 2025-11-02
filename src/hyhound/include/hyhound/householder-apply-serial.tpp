@@ -124,7 +124,7 @@ void apply_householder(MatrixView<T> L, MatrixView<T> A, UpDown signs,
                 auto As = A_.middle_rows(i);
                 // Process columns
                 auto Ls = L_.block(i, k);
-                for (index_t c = 0; c < R; ++c)
+                for (index_t c = 0; c < rem_k; ++c)
                     __builtin_prefetch(&Ls(0, c), 0, 0); // non-temporal
                 tail_microkernel_lut[rem_k - 1](rem_i, 0, A.cols, W[0], Ls, Bd,
                                                 As, signs);
