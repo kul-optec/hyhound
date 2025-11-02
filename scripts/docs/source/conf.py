@@ -33,7 +33,7 @@ autodoc_default_options = {
     "special-members": "__init__, __call__",
 }
 
-breathe_projects = {"hyhound": "../build/doxygen/xml"}
+breathe_projects = {"hyhound": "../build/xml"}
 breathe_default_project = "hyhound"
 
 # -- Options for HTML output -------------------------------------------------

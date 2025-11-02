@@ -100,7 +100,7 @@ jobs:
         with:
           name: native-wheels
           path: dist
-      - name: Install ${PACKAGE_NAME}
+      - name: Install ${{ env.PACKAGE_NAME }}
         run: python3 -m pip install --find-links=dist "${PACKAGE_NAME}[docs]==${PACKAGE_VERSION}"
       - name: Install Doxygen
         run: >
