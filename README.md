@@ -1,5 +1,6 @@
 [![arXiv Preprint](https://img.shields.io/badge/arXiv-Preprint-b31b1b)](https://arxiv.org/abs/2503.15372v1)
 [![CI: Linux](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml/badge.svg)](https://github.com/kul-optec/hyhound/actions/workflows/linux.yml)
+[![Documentation](https://img.shields.io/badge/Documentation-main-blue)](https://kul-optec.github.io/hyhound)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/hyhound?label=PyPI&logo=python)](https://pypi.org/project/hyhound)
 
 # hyhound
@@ -27,7 +28,7 @@ of the Riccati recursion for optimal control problems.
 
 ## Preprint
 
-The paper describing the algorithms in this repository can be found on arXiv: <https://arxiv.org/abs/2503.15372v1>
+The paper describing the algorithms in this repository can be found on arXiv: **<https://arxiv.org/abs/2503.15372v1>**
 
 ```bibtex
 @misc{pas_blocked_2025,
@@ -54,6 +55,8 @@ Currently, only Linux is supported (awaiting improved `std::simd` support in
 MSVC and Clang).
 
 ## Usage
+
+Documentation is available at **<https://kul-optec.github.io/hyhound>**.
 
 See [python/test/test_update_cholesky.py](python/test/test_update_cholesky.py)
 and [test_package/src/example.cpp](test_package/src/example.cpp) for usage examples.
