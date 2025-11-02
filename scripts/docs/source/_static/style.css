@@ -18,3 +18,18 @@
 ul.navbar-icon-links {
     justify-content: center;
 }
+
+.bd-sidebar-secondary {
+    flex-basis: content;
+    max-height: 100vh;
+}
+
+footer.bd-footer-content {
+    display: none;
+}
+
+/* https://github.com/executablebooks/sphinx-book-theme/issues/732 */
+#rtd-footer-container {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
