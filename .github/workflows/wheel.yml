@@ -331,6 +331,7 @@ jobs:
         #   repository-url: https://test.pypi.org/legacy/
 
   deploy-docs:
+    if: ${{ github.event.action == 'released' || github.event.action == 'prereleased' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
