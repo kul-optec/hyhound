@@ -6,34 +6,10 @@
 namespace hyhound::inline serial {
 
 template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs, MatrixView<@T@> Ws);
-
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs, MatrixView<@T@> Ws);
-
 template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs, MatrixView<@T@> Ws);
-
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs, MatrixView<@T@> Ws);
-
 template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs, MatrixView<@T@> Ws);
-
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, UpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, UpDowndate<@T@> signs, MatrixView<@T@> Ws);
-
 template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs, MatrixView<@T@> Ws);
-
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DownUpdate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DownUpdate<@T@> signs, MatrixView<@T@> Ws);
-
 template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs, MatrixView<@T@> Ws);
-
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 2}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 4}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs, MatrixView<@T@> Ws);
-template HYHOUND_EXPORT void update_cholesky<@T@, {.block_size_r = @R@, .block_size_s = @S@, .num_blocks_r = 8}, DiagonalUpDowndate<@T@>>(MatrixView<@T@> L, MatrixView<@T@> A, DiagonalUpDowndate<@T@> signs, MatrixView<@T@> Ws);
 
 template HYHOUND_EXPORT void apply_householder<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Update>(MatrixView<@T@> L, MatrixView<@T@> A, Update signs, std::type_identity_t<MatrixView<const @T@>> B, std::type_identity_t<MatrixView<const @T@>> Ws);
 template HYHOUND_EXPORT void apply_householder<@T@, {.block_size_r = @R@, .block_size_s = @S@}, Downdate>(MatrixView<@T@> L, MatrixView<@T@> A, Downdate signs, std::type_identity_t<MatrixView<const @T@>> B, std::type_identity_t<MatrixView<const @T@>> Ws);
