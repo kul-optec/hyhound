@@ -9,7 +9,7 @@
 project = "hyhound"
 copyright = "2025, Pieter Pas"
 author = "Pieter Pas"
-release = "1.0.2a3"
+release = "1.0.2a4"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -49,8 +49,8 @@ html_favicon = "images/hyhound-logo.svg"
 html_context = {
     "github_user": "kul-optec",
     "github_repo": "hyhound",
-    "github_version": "1.0.2a3",
-    "doc_path": "docs",
+    "github_version": "develop",
+    "doc_path": "scripts/docs/source",
 }
 html_show_sourcelink = False
 html_theme_options = {
