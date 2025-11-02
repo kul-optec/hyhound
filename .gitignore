@@ -5,6 +5,7 @@ CMakeUserPresets.json
 *.pdf
 *.png
 *.svg
+!scripts/docs/**/*.svg
 hyh*.json
 ocp*.json
 conan-recipes
