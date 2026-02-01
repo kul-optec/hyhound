@@ -21,17 +21,32 @@ def test_update_cholesky():
     assert la.norm(L2 - L4, "fro") < 1e-12
 
 
+def test_update_cholesky_block():
+    rng = np.random.default_rng(seed=123)
+    m, n, N = 7, 5, 13
+    L = np.tril(rng.uniform(-2, 2, (n * N, n * N)))
+    A = rng.uniform(-1, 1, (n * N, m))
+
+    L̃ = np.array(L, order="F")
+    Ã = np.array(A, order="F")
+    for i in range(N):
+        Li = L̃[i * n :, i * n : (i + 1) * n]
+        Ai = Ã[i * n :, :]
+        hyhound.update_cholesky_inplace(Li, Ai)
+    assert la.norm(L @ L.T + A @ A.T - L̃ @ L̃.T, "fro") < 1e-12
+
+
 def test_update_cholesky_tall():
     rng = np.random.default_rng(seed=123)
     m, n, p = 7, 13, 43
     L = np.tril(rng.uniform(-2, 2, (p, n)))
     A = rng.uniform(-1, 1, (p, m))
     L̃, Ã, Wu = hyhound.update_cholesky(L, A)
-    Bu = Ã[:n, :].copy()
+    Bu = Ã[:n, :].copy("F")
     Ã[:n, :] = 0
     assert la.norm(L @ L.T + A @ A.T - L̃ @ L̃.T - Ã @ Ã.T, "fro") < 1e-12
     L2, A2, Wd = hyhound.downdate_cholesky(L̃, A)
-    Bd = A2[:n, :].copy()
+    Bd = A2[:n, :].copy("F")
     A2[:n, :] = 0
     assert la.norm(L @ L.T - L2 @ L2.T - Ã @ Ã.T + A2 @ A2.T, "fro") < 1e-12
 

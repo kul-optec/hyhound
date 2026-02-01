@@ -34,9 +34,9 @@ void apply_householder(MatrixView<T> L, MatrixView<T> A, const UpDown &signs,
 namespace {
 
 template <class... Args>
-auto view(const nb::ndarray<Args...> &array)
-    requires(array.Order == 'F')
-{
+auto view(const nb::ndarray<Args...> &array) {
+    if (array.stride(0) != 1)
+        throw std::invalid_argument("Row stride must be 1");
     return hyhound::MatrixView<typename nb::ndarray<Args...>::Scalar>{{
         .data         = array.data(),
         .rows         = static_cast<hyhound::index_t>(array.shape(0)),
@@ -93,6 +93,14 @@ auto zero_top_rows(nb::ndarray<Args...> &array, size_t n) {
             v(r, c) = T{};
 }
 
+template <class... Args>
+void ensure_unit_row_stride(const nb::ndarray<Args...> &array,
+                            std::string_view name = "") {
+    if (array.stride(0) != 1)
+        throw std::invalid_argument("Row stride of argument '" +
+                                    std::string(name) + "' must be 1");
+}
+
 template <class... ArgsL, class... ArgsA>
 void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A) {
     if (L.ndim() != 2)
@@ -128,14 +136,13 @@ void register_module(nb::module_ &m) {
     using c_matrix = nb::ndarray<const T, nb::ndim<2>, nb::device::cpu>;
     using c_vector =
         nb::ndarray<const T, nb::ndim<1>, nb::device::cpu, nb::any_contig>;
-    using matrix_cm =
-        nb::ndarray<T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
-    using c_matrix_cm =
-        nb::ndarray<const T, nb::ndim<2>, nb::device::cpu, nb::f_contig>;
+    using matrix = nb::ndarray<T, nb::ndim<2>, nb::device::cpu>;
     // In-place
     m.def(
         "update_cholesky_inplace",
-        [](matrix_cm L, matrix_cm A) {
+        [](matrix L, matrix A) {
+            ensure_unit_row_stride(L, "L");
+            ensure_unit_row_stride(A, "A");
             check_dim(L, A);
             hyhound::py::update_cholesky(view(L), view(A), hyhound::Update{});
             zero_top_rows(A, L.shape(1));
@@ -160,7 +167,9 @@ A : (k × m), rectangular, Fortran order
 
     m.def(
         "downdate_cholesky_inplace",
-        [](matrix_cm L, matrix_cm A) {
+        [](matrix L, matrix A) {
+            ensure_unit_row_stride(L, "L");
+            ensure_unit_row_stride(A, "A");
             check_dim(L, A);
             hyhound::py::update_cholesky(view(L), view(A), hyhound::Downdate{});
             zero_top_rows(A, L.shape(1));
@@ -185,7 +194,9 @@ A : (k × m), rectangular, Fortran order
 
     m.def(
         "update_cholesky_sign_inplace",
-        [](matrix_cm L, matrix_cm A, c_vector signs) {
+        [](matrix L, matrix A, c_vector signs) {
+            ensure_unit_row_stride(L, "L");
+            ensure_unit_row_stride(A, "A");
             check_dim(L, A);
             if (A.shape(1) != signs.size())
                 throw std::invalid_argument("len(signs) should be A.shape[1]");
@@ -221,7 +232,9 @@ signs : m-vector
 
     m.def(
         "update_cholesky_diag_inplace",
-        [](matrix_cm L, matrix_cm A, c_vector diag) {
+        [](matrix L, matrix A, c_vector diag) {
+            ensure_unit_row_stride(L, "L");
+            ensure_unit_row_stride(A, "A");
             check_dim(L, A);
             if (A.shape(1) != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
@@ -437,7 +450,9 @@ W : (r × n)
     // Applying Householder transformations
     m.def(
         "update_apply_householder",
-        [](c_matrix L, c_matrix A, c_matrix_cm B, c_matrix_cm W) {
+        [](c_matrix L, c_matrix A, c_matrix B, c_matrix W) {
+            ensure_unit_row_stride(B, "B");
+            ensure_unit_row_stride(W, "W");
             check_dim(L, A, B, W);
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::py::apply_householder(view(L̃), view(Ã), hyhound::Update{},
@@ -479,7 +494,9 @@ L̃ : (l × n)
 )doc");
     m.def(
         "downdate_apply_householder",
-        [](c_matrix L, c_matrix A, c_matrix_cm B, c_matrix_cm W) {
+        [](c_matrix L, c_matrix A, c_matrix B, c_matrix W) {
+            ensure_unit_row_stride(B, "B");
+            ensure_unit_row_stride(W, "W");
             check_dim(L, A, B, W);
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::py::apply_householder(
@@ -522,8 +539,9 @@ L̃ : (l × n)
 
     m.def(
         "update_apply_householder_sign",
-        [](c_matrix L, c_matrix A, c_vector signs, c_matrix_cm B,
-           c_matrix_cm W) {
+        [](c_matrix L, c_matrix A, c_vector signs, c_matrix B, c_matrix W) {
+            ensure_unit_row_stride(B, "B");
+            ensure_unit_row_stride(W, "W");
             check_dim(L, A, B, W);
             if (A.shape(1) != signs.size())
                 throw std::invalid_argument("len(signs) should be A.shape[1]");
@@ -576,8 +594,9 @@ L̃ : (l × n)
 
     m.def(
         "update_apply_householder_diag",
-        [](c_matrix L, c_matrix A, c_vector diag, c_matrix_cm B,
-           c_matrix_cm W) {
+        [](c_matrix L, c_matrix A, c_vector diag, c_matrix B, c_matrix W) {
+            ensure_unit_row_stride(B, "B");
+            ensure_unit_row_stride(W, "W");
             check_dim(L, A, B, W);
             if (A.shape(1) != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
