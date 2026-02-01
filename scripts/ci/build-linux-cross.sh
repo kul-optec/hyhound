@@ -48,7 +48,7 @@ EOF
 for i in "${!archs[@]}"; do
     c=$((i + 1))
 	cat <<- EOF >> "$pbc_config"
-	conan.$c.profile_host=["$profiles/platform/$triple.profile"]
+	conan.$c.profile_host=["$profiles/toolchain/$triple.profile"]
 	conan.$c.profile_host+=["$PWD/scripts/ci/profiles/${archs[$i]}.profile"]
 	conan.$c.profile_host+=["$python_profile"]
 	conan.$c.profile_host+=["$profiles/gcc-static.profile"]
