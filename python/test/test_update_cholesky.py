@@ -42,11 +42,11 @@ def test_update_cholesky_tall():
     L = np.tril(rng.uniform(-2, 2, (p, n)))
     A = rng.uniform(-1, 1, (p, m))
     L̃, Ã, Wu = hyhound.update_cholesky(L, A)
-    Bu = Ã[:n, :].copy("F")
+    Bu = Ã[:n, :].copy()  # Note: for performane, this should be order="K"
     Ã[:n, :] = 0
     assert la.norm(L @ L.T + A @ A.T - L̃ @ L̃.T - Ã @ Ã.T, "fro") < 1e-12
     L2, A2, Wd = hyhound.downdate_cholesky(L̃, A)
-    Bd = A2[:n, :].copy("F")
+    Bd = A2[:n, :].copy()  # Note: for performane, this should be order="K"
     A2[:n, :] = 0
     assert la.norm(L @ L.T - L2 @ L2.T - Ã @ Ã.T + A2 @ A2.T, "fro") < 1e-12
 

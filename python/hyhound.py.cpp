@@ -2,6 +2,7 @@
 #include <hyhound/updown.hpp>
 #include <hyhound-version.h>
 
+#include <guanaqo/nanobind/matrix-view.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/tuple.h>
@@ -93,12 +94,9 @@ auto zero_top_rows(nb::ndarray<Args...> &array, size_t n) {
             v(r, c) = T{};
 }
 
-template <class... Args>
-void ensure_unit_row_stride(const nb::ndarray<Args...> &array,
-                            std::string_view name = "") {
-    if (array.stride(0) != 1)
-        throw std::invalid_argument("Row stride of argument '" +
-                                    std::string(name) + "' must be 1");
+template <class T>
+auto zero_top_rows(const hyhound::MatrixView<T> &array, size_t n) {
+    array.top_rows(n).set_constant(T{});
 }
 
 template <class... ArgsL, class... ArgsA>
@@ -114,38 +112,48 @@ void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A) {
         throw std::invalid_argument("A.shape[0] should match L.shape[0]");
 }
 
-template <class... ArgsL, class... ArgsA, class... ArgsW, class... ArgsB>
+template <class TL, class TA>
+void check_dim(const hyhound::MatrixView<TL> &L,
+               const hyhound::MatrixView<TA> &A) {
+    if (L.rows < L.cols)
+        throw std::invalid_argument("L.shape[0] should be greater than "
+                                    "or equal to L.shape[1]");
+    if (A.rows != L.rows)
+        throw std::invalid_argument("A.shape[0] should match L.shape[0]");
+}
+
+template <class... ArgsL, class... ArgsA, class TB, class TW>
 void check_dim(const nb::ndarray<ArgsL...> &L, const nb::ndarray<ArgsA...> &A,
-               const nb::ndarray<ArgsB...> &B, const nb::ndarray<ArgsW...> &W) {
+               const hyhound::MatrixView<TB> &B,
+               const hyhound::MatrixView<TW> &W) {
     check_dim(L, A);
-    using T = std::remove_const_t<typename nb::ndarray<ArgsW...>::Scalar>;
+    using T                 = std::remove_const_t<TW>;
     static constexpr auto R = hyhound::py::config<T>.block_size_r;
-    if (W.shape(0) != R)
+    if (W.rows != R)
         throw std::invalid_argument("W.shape[0] should be " +
                                     std::to_string(R));
-    if (W.shape(1) != L.shape(1))
+    if (W.cols != L.shape(1))
         throw std::invalid_argument("W.shape[1] should match L.shape[1]");
-    if (B.shape(0) != L.shape(1))
+    if (B.rows != L.shape(1))
         throw std::invalid_argument("B.shape[0] should match L.shape[1]");
-    if (B.shape(1) != A.shape(1))
+    if (B.cols != A.shape(1))
         throw std::invalid_argument("B.shape[1] should match A.shape[1]");
 }
 
 template <class T>
 void register_module(nb::module_ &m) {
-    using c_matrix = nb::ndarray<const T, nb::ndim<2>, nb::device::cpu>;
-    using c_vector =
+    using mat_in = nb::ndarray<const T, nb::ndim<2>, nb::device::cpu>;
+    using vec_in =
         nb::ndarray<const T, nb::ndim<1>, nb::device::cpu, nb::any_contig>;
-    using matrix = nb::ndarray<T, nb::ndim<2>, nb::device::cpu>;
+    using mat_inout = hyhound::MatrixView<T>;
+    using mat_in_F  = hyhound::MatrixView<const T>;
     // In-place
     m.def(
         "update_cholesky_inplace",
-        [](matrix L, matrix A) {
-            ensure_unit_row_stride(L, "L");
-            ensure_unit_row_stride(A, "A");
+        [](mat_inout L, mat_inout A) {
             check_dim(L, A);
-            hyhound::py::update_cholesky(view(L), view(A), hyhound::Update{});
-            zero_top_rows(A, L.shape(1));
+            hyhound::py::update_cholesky(L, A, hyhound::Update{});
+            zero_top_rows(A, L.cols);
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -155,11 +163,11 @@ L̃L̃ᵀ + ÃÃᵀ = LLᵀ + AAᵀ
 
 Parameters
 ----------
-L : (k × n), lower-trapezoidal, Fortran order
+L : (k × n), lower-trapezoidal, Fortran order.
     On entry, the original Cholesky factor L.
     On exit, contains the updated Cholesky factor L̃.
 
-A : (k × m), rectangular, Fortran order
+A : (k × m), rectangular, Fortran order.
     On entry, the update matrix A.
     On exit, contains the k-n bottom rows of the remaining update matrix Ã
     (the top n rows of Ã are zero).
@@ -167,12 +175,10 @@ A : (k × m), rectangular, Fortran order
 
     m.def(
         "downdate_cholesky_inplace",
-        [](matrix L, matrix A) {
-            ensure_unit_row_stride(L, "L");
-            ensure_unit_row_stride(A, "A");
+        [](mat_inout L, mat_inout A) {
             check_dim(L, A);
-            hyhound::py::update_cholesky(view(L), view(A), hyhound::Downdate{});
-            zero_top_rows(A, L.shape(1));
+            hyhound::py::update_cholesky(L, A, hyhound::Downdate{});
+            zero_top_rows(A, L.cols);
         },
         "L"_a.noconvert(), "A"_a.noconvert(),
         R"doc(
@@ -182,11 +188,11 @@ L̃L̃ᵀ - ÃÃᵀ = LLᵀ - AAᵀ
 
 Parameters
 ----------
-L : (k × n), lower-trapezoidal, Fortran order
+L : (k × n), lower-trapezoidal, Fortran order.
     On entry, the original Cholesky factor L.
     On exit, contains the updated Cholesky factor L̃.
 
-A : (k × m), rectangular, Fortran order
+A : (k × m), rectangular, Fortran order.
     On entry, the downdate matrix A.
     On exit, contains the k-n bottom rows of the remaining downdate matrix Ã
     (the top n rows of Ã are zero).
@@ -194,18 +200,16 @@ A : (k × m), rectangular, Fortran order
 
     m.def(
         "update_cholesky_sign_inplace",
-        [](matrix L, matrix A, c_vector signs) {
-            ensure_unit_row_stride(L, "L");
-            ensure_unit_row_stride(A, "A");
+        [](mat_inout L, mat_inout A, vec_in signs) {
             check_dim(L, A);
-            if (A.shape(1) != signs.size())
+            if (A.cols != signs.size())
                 throw std::invalid_argument("len(signs) should be A.shape[1]");
             std::span signs_span{signs.data(), signs.shape(0)};
             if (!std::ranges::all_of(signs_span, [](T t) { return t == T{}; }))
                 throw std::invalid_argument("signs should be +/- zero");
             hyhound::UpDowndate<T> sgn{signs_span};
-            hyhound::py::update_cholesky(view(L), view(A), sgn);
-            zero_top_rows(A, L.shape(1));
+            hyhound::py::update_cholesky(L, A, sgn);
+            zero_top_rows(A, L.cols);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "signs"_a,
         R"doc(
@@ -216,7 +220,7 @@ where S = np.diag(np.copysign(np.ones(m), signs)) and signs contains ±0.
 
 Parameters
 ----------
-L : (k × n), lower-trapezoidal, Fortran order
+L : (k × n), lower-trapezoidal, Fortran order.
     On entry, the original Cholesky factor L.
     On exit, contains the updated Cholesky factor L̃.
 
@@ -232,16 +236,14 @@ signs : m-vector
 
     m.def(
         "update_cholesky_diag_inplace",
-        [](matrix L, matrix A, c_vector diag) {
-            ensure_unit_row_stride(L, "L");
-            ensure_unit_row_stride(A, "A");
+        [](mat_inout L, mat_inout A, vec_in diag) {
             check_dim(L, A);
-            if (A.shape(1) != diag.size())
+            if (A.cols != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
-            hyhound::py::update_cholesky(view(L), view(A), d);
-            zero_top_rows(A, L.shape(1));
+            hyhound::py::update_cholesky(L, A, d);
+            zero_top_rows(A, L.cols);
         },
         "L"_a.noconvert(), "A"_a.noconvert(), "diag"_a,
         R"doc(
@@ -252,11 +254,11 @@ where D = np.diag(diag).
 
 Parameters
 ----------
-L : (k × n), lower-trapezoidal, Fortran order
+L : (k × n), lower-trapezoidal, Fortran order.
     On entry, the original Cholesky factor L.
     On exit, contains the updated Cholesky factor L̃.
 
-A : (k × m), rectangular, Fortran order
+A : (k × m), rectangular, Fortran order.
     On entry, the update matrix A.
     On exit, contains the k-n bottom rows of the remaining update matrix Ã
     (the top n rows of Ã are zero).
@@ -268,7 +270,7 @@ diag : m-vector
     // Returning copies
     m.def(
         "update_cholesky",
-        [](c_matrix L, c_matrix A) {
+        [](mat_in L, mat_in A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
             auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
@@ -309,7 +311,7 @@ W : (r × n)
 
     m.def(
         "downdate_cholesky",
-        [](c_matrix L, c_matrix A) {
+        [](mat_in L, mat_in A) {
             check_dim(L, A);
             auto L̃ = copy(L), Ã = copy(A);
             auto W = empty<T>(hyhound::py::config<T>.block_size_r, L̃.shape(1));
@@ -350,7 +352,7 @@ W : (r × n)
 
     m.def(
         "update_cholesky_sign",
-        [](c_matrix L, c_matrix A, c_vector signs) {
+        [](mat_in L, mat_in A, vec_in signs) {
             check_dim(L, A);
             if (A.shape(1) != signs.size())
                 throw std::invalid_argument("len(signs) should be A.shape[1]");
@@ -401,7 +403,7 @@ W : (r × n)
 
     m.def(
         "update_cholesky_diag",
-        [](c_matrix L, c_matrix A, c_vector diag) {
+        [](mat_in L, mat_in A, vec_in diag) {
             check_dim(L, A);
             if (A.shape(1) != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
@@ -450,13 +452,11 @@ W : (r × n)
     // Applying Householder transformations
     m.def(
         "update_apply_householder",
-        [](c_matrix L, c_matrix A, c_matrix B, c_matrix W) {
-            ensure_unit_row_stride(B, "B");
-            ensure_unit_row_stride(W, "W");
+        [](mat_in L, mat_in A, mat_in_F B, mat_in_F W) {
             check_dim(L, A, B, W);
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::py::apply_householder(view(L̃), view(Ã), hyhound::Update{},
-                                           view(B), view(W));
+                                           B, W);
             return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "B"_a, "W"_a,
@@ -494,13 +494,11 @@ L̃ : (l × n)
 )doc");
     m.def(
         "downdate_apply_householder",
-        [](c_matrix L, c_matrix A, c_matrix B, c_matrix W) {
-            ensure_unit_row_stride(B, "B");
-            ensure_unit_row_stride(W, "W");
+        [](mat_in L, mat_in A, mat_in_F B, mat_in_F W) {
             check_dim(L, A, B, W);
             auto L̃ = copy(L), Ã = copy(A);
-            hyhound::py::apply_householder(
-                view(L̃), view(Ã), hyhound::Downdate{}, view(B), view(W));
+            hyhound::py::apply_householder(view(L̃), view(Ã),
+                                           hyhound::Downdate{}, B, W);
             return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "B"_a, "W"_a,
@@ -539,9 +537,7 @@ L̃ : (l × n)
 
     m.def(
         "update_apply_householder_sign",
-        [](c_matrix L, c_matrix A, c_vector signs, c_matrix B, c_matrix W) {
-            ensure_unit_row_stride(B, "B");
-            ensure_unit_row_stride(W, "W");
+        [](mat_in L, mat_in A, vec_in signs, mat_in_F B, mat_in_F W) {
             check_dim(L, A, B, W);
             if (A.shape(1) != signs.size())
                 throw std::invalid_argument("len(signs) should be A.shape[1]");
@@ -550,8 +546,7 @@ L̃ : (l × n)
                 throw std::invalid_argument("signs should be +/- zero");
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::UpDowndate<T> sgn{signs_span};
-            hyhound::py::apply_householder(view(L̃), view(Ã), sgn, view(B),
-                                           view(W));
+            hyhound::py::apply_householder(view(L̃), view(Ã), sgn, B, W);
             return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "signs"_a, "B"_a, "W"_a,
@@ -594,17 +589,14 @@ L̃ : (l × n)
 
     m.def(
         "update_apply_householder_diag",
-        [](c_matrix L, c_matrix A, c_vector diag, c_matrix B, c_matrix W) {
-            ensure_unit_row_stride(B, "B");
-            ensure_unit_row_stride(W, "W");
+        [](mat_in L, mat_in A, vec_in diag, mat_in_F B, mat_in_F W) {
             check_dim(L, A, B, W);
             if (A.shape(1) != diag.size())
                 throw std::invalid_argument("len(diag) should be A.shape[1]");
             auto L̃ = copy(L), Ã = copy(A);
             hyhound::DiagonalUpDowndate<T> d{
                 std::span{diag.data(), diag.shape(0)}};
-            hyhound::py::apply_householder(view(L̃), view(Ã), d, view(B),
-                                           view(W));
+            hyhound::py::apply_householder(view(L̃), view(Ã), d, B, W);
             return std::make_tuple(std::move(L̃), std::move(Ã));
         },
         "L"_a, "A"_a, "diag"_a, "B"_a, "W"_a,
@@ -654,8 +646,14 @@ NB_MODULE(MODULE_NAME, m) {
     m.attr("commit_hash") = HYHOUND_COMMIT_HASH;
 #if HYHOUND_WITH_DOUBLE
     register_module<double>(m);
+    m.attr("with_double") = true;
+#else
+    m.attr("with_double") = false;
 #endif
 #if HYHOUND_WITH_FLOAT
     register_module<float>(m);
+    m.attr("with_float") = true;
+#else
+    m.attr("with_float") = false;
 #endif
 }
