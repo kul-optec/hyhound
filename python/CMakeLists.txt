@@ -81,6 +81,11 @@ if (HYHOUND_WITH_PYTHON_DISPATCH)
     find_package(CpuFeatures REQUIRED)
     target_link_libraries(_dispatch PRIVATE CpuFeatures::cpu_features)
     hyhound_configure_visibility(_dispatch)
+    set_target_properties(_dispatch PROPERTIES
+        RELEASE_POSTFIX ""
+        DEBUG_POSTFIX ""
+        RELWITHDEBINFO_POSTFIX ""
+        MINSIZEREL_POSTFIX "")
     install(TARGETS _dispatch
         EXCLUDE_FROM_ALL
         COMPONENT python_modules
