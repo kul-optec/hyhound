@@ -2,7 +2,7 @@
 Hyperbolic Householder transformations for Up- and Downdating Cholesky factorizations.
 """
 
-__version__ = "1.1.1.dev0"
+__version__ = "1.1.1"
 
 from ._hyhound import *  # noqa: F403
 from ._hyhound import __version__ as __c_version__  # noqa: F401

@@ -9,7 +9,7 @@
 project = "hyhound"
 copyright = "2025, Pieter Pas"
 author = "Pieter Pas"
-release = "1.1.1.dev0"
+release = "1.1.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
