@@ -7,7 +7,7 @@ on:
     types: ['released', 'prereleased']
 
 env:
-  PACKAGE_VERSION: '1.1.1'
+  PACKAGE_VERSION: '1.1.2'
   PACKAGE_NAME: hyhound
 
 jobs:

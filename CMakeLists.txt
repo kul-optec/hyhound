@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24...4.1)
 set(CMAKE_CXX_SCAN_FOR_MODULES Off)
 project(hyhound
-    VERSION 1.1.1
+    VERSION 1.1.2
     DESCRIPTION "Hyperbolic Householder transformations for Cholesky factorization up- and downdates"
     HOMEPAGE_URL "https://github.com/kul-optec/hyhound"
     LANGUAGES CXX
